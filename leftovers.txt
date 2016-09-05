@@ -1,0 +1,277 @@
+Pch.h
+define D3D_DEBUG_INFO
+
+
+
+
+Base.h
+#	ifndef NO_DIRECT_X
+extern HRESULT _d_hr;
+#		define V(x) assert(SUCCEEDED(_d_hr = (x)))
+#	endif
+#	define DEBUG_DO(x) (x)
+#	define C(x) assert(x)
+#else
+#	ifndef NO_DIRECT_X
+#		define V(x) (x)
+#	endif
+#	define DEBUG_DO(x)
+#	define C(x) x
+#endif
+
+//-----------------------------------------------------------------------------
+// Inne typy
+#ifndef COMMON_ONLY
+typedef FMOD::Sound* SOUND;
+#endif
+struct Animesh;
+struct AnimeshInstance;
+
+//-----------------------------------------------------------------------------
+// Typy zmiennych directx
+#ifndef NO_DIRECT_X
+typedef ID3DXFont* FONT;
+typedef LPDIRECT3DINDEXBUFFER9 IB;
+typedef D3DXMATRIX MATRIX;
+typedef IDirect3DTexture9* TEX;
+typedef IDirect3DSurface9* SURFACE;
+typedef D3DXQUATERNION QUAT;
+typedef LPDIRECT3DVERTEXBUFFER9 VB;
+typedef D3DXVECTOR2 VEC2;
+typedef D3DXVECTOR3 VEC3;
+typedef D3DXVECTOR4 VEC4;
+#endif
+
+//-----------------------------------------------------------------------------
+// funkcja do zwalniania obiektów directx
+template<typename T>
+inline void SafeRelease(T& x)
+{
+	if(x)
+	{
+		x->Release();
+		x = nullptr;
+	}
+}
+
+#ifndef NO_DIRECT_X
+inline VEC2 slerp(const VEC2& a, const VEC2& b, float t)
+{
+	return VEC2(slerp(a.x, b.x, t), slerp(a.y, b.y, t));
+}
+#endif
+
+
+//-----------------------------------------------------------------------------
+// Funkcje dla bullet physics
+//-----------------------------------------------------------------------------
+#ifndef COMMON_ONLY
+inline VEC2 ToVEC2(const btVector3& v)
+{
+	return VEC2(v.x(), v.z());
+}
+
+inline VEC3 ToVEC3(const btVector3& v)
+{
+	return VEC3(v.x(), v.y(), v.z());
+}
+
+inline btVector3 ToVector3(const VEC2& v)
+{
+	return btVector3(v.x, 0, v.y);
+}
+
+inline btVector3 ToVector3(const VEC3& v)
+{
+	return btVector3(v.x, v.y, v.z);
+}
+
+// Function for calculating rotation around point for physic nodes
+// from: http://bulletphysics.org/Bullet/phpBB3/viewtopic.php?t=5182
+inline void RotateGlobalSpace(btTransform& out, const btTransform& T, const btMatrix3x3& rotationMatrixToApplyBeforeTGlobalSpace,
+	const btVector3& centerOfRotationRelativeToTLocalSpace)
+{
+	// Note:  - centerOfRotationRelativeToTLocalSpace = TRelativeToCenterOfRotationLocalSpace (LocalSpace is relative to the T.basis())
+	// Distance between the center of rotation and T in global space
+	const btVector3 TRelativeToTheCenterOfRotationGlobalSpace = T.getBasis() * (-centerOfRotationRelativeToTLocalSpace);
+	// Absolute position of the center of rotation = Absolute position of T + PositionOfTheCenterOfRotationRelativeToT
+	const btVector3 centerOfRotationAbsolute = T.getOrigin() - TRelativeToTheCenterOfRotationGlobalSpace;
+	out = btTransform(rotationMatrixToApplyBeforeTGlobalSpace*T.getBasis(),
+		centerOfRotationAbsolute + rotationMatrixToApplyBeforeTGlobalSpace * TRelativeToTheCenterOfRotationGlobalSpace);
+}
+
+inline void RotateGlobalSpace(btTransform& out, const btTransform& T, const btQuaternion& rotationToApplyBeforeTGlobalSpace,
+	const btVector3& centerOfRotationRelativeToTLocalSpace)
+{
+	RotateGlobalSpace(out, T, btMatrix3x3(rotationToApplyBeforeTGlobalSpace), centerOfRotationRelativeToTLocalSpace);
+}
+#endif
+
+
+
+//-----------------------------------------------------------------------------
+// dodatkowe funkcje matematyczne directx
+// można zrobić to używając innych ale tak jest krócej
+//-----------------------------------------------------------------------------
+inline MATRIX* D3DXMatrixTranslation(MATRIX* mat, const VEC3& pos)
+{
+	return D3DXMatrixTranslation(mat, pos.x, pos.y, pos.z);
+}
+
+inline MATRIX* D3DXMatrixScaling(MATRIX* mat, const VEC3& scale)
+{
+	return D3DXMatrixScaling(mat, scale.x, scale.y, scale.z);
+}
+
+inline MATRIX* D3DXMatrixScaling(MATRIX* mat, float scale)
+{
+	return D3DXMatrixScaling(mat, scale, scale, scale);
+}
+
+inline MATRIX* D3DXMatrixRotation(MATRIX* mat, const VEC3& rot)
+{
+	return D3DXMatrixRotationYawPitchRoll(mat, rot.y, rot.x, rot.z);
+}
+
+inline void D3DXVec2Normalize(VEC2& v)
+{
+	D3DXVec2Normalize(&v, &v);
+}
+
+inline void D3DXVec3Normalize(VEC3* v)
+{
+	D3DXVec3Normalize(v, v);
+}
+
+inline VEC3* D3DXVec3Transform(VEC3* out, const VEC3* in, const MATRIX* mat)
+{
+	D3DXVECTOR4 v;
+	D3DXVec3Transform(&v, in, mat);
+	out->x = v.x;
+	out->y = v.y;
+	out->z = v.z;
+	return out;
+}
+
+inline void VEC3Multiply(VEC3& out, const VEC3& v1, const VEC3& v2)
+{
+	out.x = v1.x * v2.x;
+	out.y = v1.y * v2.y;
+	out.z = v1.z * v2.z;
+}
+
+inline void D3DXQuaternionRotation(QUAT& q, const VEC3& rot)
+{
+	D3DXQuaternionRotationYawPitchRoll(&q, rot.y, rot.x, rot.z);
+}
+
+// !! ta funkcja zakłada określoną kolejność wykonywania obrotów (chyba YXZ), w blenderze domyślnie jest XYZ ale można zmienić
+// nie używać, używać quaternion xD
+inline float MatrixGetYaw(const MATRIX& m)
+{
+	if(m._21 > 0.998f || m._21 < -0.998f)
+		return atan2(m._13, m._33);
+	else
+		return atan2(-m._31, m._11);
+}
+#endif
+
+
+
+
+
+
+//-----------------------------------------------------------------------------
+// BitStream source
+class BitStreamSource : public StreamSource
+{
+public:
+	BitStreamSource(BitStream* bitstream, bool write);
+
+	inline bool IsFile() const { return false; }
+	bool Read(void* ptr, uint data_size);
+	bool Skip(uint data_size);
+	void Write(const void* ptr, uint data_size);
+
+private:
+	BitStream* bitstream;
+	bool write;
+};
+
+//=================================================================================================
+BitStreamSource::BitStreamSource(BitStream* bitstream, bool write) : bitstream(bitstream), write(write)
+{
+	assert(bitstream);
+	size = bitstream->GetNumberOfBytesUsed();
+	offset = (write ? bitstream->GetWriteOffset() : bitstream->GetReadOffset()) / 8;
+	valid = true;
+}
+
+
+//=================================================================================================
+bool BitStreamSource::Read(void* ptr, uint data_size)
+{
+	assert(ptr && !write);
+	if(!Ensure(data_size))
+		return false;
+	bitstream->Read((char*)ptr, data_size);
+	offset += data_size;
+	return true;
+}
+
+//=================================================================================================
+bool BitStreamSource::Skip(uint data_size)
+{
+	assert(!write);
+	if(!Ensure(data_size))
+		return false;
+	offset += data_size;
+	uint pos = offset * 8;
+	if(write)
+		bitstream->SetWriteOffset(pos);
+	else
+		bitstream->SetReadOffset(pos);
+	return true;
+}
+
+//=================================================================================================
+void BitStreamSource::Write(const void* ptr, uint data_size)
+{
+	assert(ptr && write);
+	bitstream->Write((const char*)ptr, data_size);
+	size += data_size;
+	offset += data_size;
+}
+
+//=================================================================================================
+StreamReader::StreamReader(BitStream& bitstream)
+{
+	source = StreamSourcePool::Get<BitStreamSource>(&bitstream, false);
+	ok = source->IsValid();
+}
+
+//=================================================================================================
+StreamWriter::StreamWriter(BitStream& bitstream)
+{
+	source = StreamSourcePool::Get<BitStreamSource>(&bitstream, true);
+}
+
+//template<typename T, typename T2>
+	//inline INT2(T _x, T2 _y) : x(int(_x)), y(int(_y)) {}
+	
+	
+	
+	
+/*inline VEC2 lerp(const VEC2& v1, const VEC2& v2, float t)
+{
+	VEC2 out;
+	D3DXVec2Lerp(&out, &v1, &v2, t);
+	return out;
+}*/
+
+/*inline VEC3 lerp(const VEC3& v1, const VEC3& v2, float t)
+{
+	VEC3 out;
+	D3DXVec3Lerp(&out, &v1, &v2, t);
+	return out;
+}*/
