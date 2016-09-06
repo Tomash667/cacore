@@ -82,9 +82,10 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>Pch.h</PrecompiledHeaderFile>
+      <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Lib>
       <AdditionalOptions>/ignore:4221 %(AdditionalOptions)</AdditionalOptions>
@@ -106,7 +107,8 @@
       <SDLCheck>true</SDLCheck>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>Pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -130,45 +132,51 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Base.h" />
-    <ClInclude Include="Config.h" />
-    <ClInclude Include="Container.h" />
-    <ClInclude Include="Core.h" />
-    <ClInclude Include="CorePch.h" />
-    <ClInclude Include="Crc.h" />
-    <ClInclude Include="CriticalSection.h" />
-    <ClInclude Include="File.h" />
-    <ClInclude Include="Logger.h" />
-    <ClInclude Include="Math.h" />
-    <ClInclude Include="Pch.h" />
-    <ClInclude Include="Perlin.h" />
-    <ClInclude Include="Profiler.h" />
-    <ClInclude Include="QuadTree.h" />
-    <ClInclude Include="Stream.h" />
-    <ClInclude Include="Text.h" />
-    <ClInclude Include="Timer.h" />
-    <ClInclude Include="Tokenizer.h" />
+    <ClInclude Include="Core/Base.h" />
+    <ClInclude Include="Core/Config.h" />
+    <ClInclude Include="Core/Container.h" />
+    <ClInclude Include="Core/Core.h" />
+    <ClInclude Include="Core/CorePch.h" />
+    <ClInclude Include="Core/Crc.h" />
+    <ClInclude Include="Core/CriticalSection.h" />
+    <ClInclude Include="Core/File.h" />
+    <ClInclude Include="Core/Logger.h" />
+    <ClInclude Include="Core/Math.h" />
+    <ClInclude Include="Core/Perlin.h" />
+    <ClInclude Include="Core/Profiler.h" />
+    <ClInclude Include="Core/QuadTree.h" />
+    <ClInclude Include="Core/Stream.h" />
+    <ClInclude Include="Core/Text.h" />
+    <ClInclude Include="Core/Timer.h" />
+    <ClInclude Include="Core/Tokenizer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="BoxToBox.cpp" />
-    <ClCompile Include="Bresenham.cpp" />
-    <ClCompile Include="Config.cpp" />
-    <ClCompile Include="Container.cpp" />
-    <ClCompile Include="Crc.cpp" />
-    <ClCompile Include="File.cpp" />
-    <ClCompile Include="Logger.cpp" />
-    <ClCompile Include="Pch.cpp">
+    <ClInclude Include="Core\Undefine.h" />
+    <ClInclude Include="Source/Pch.h" />
+    <ClCompile Include="Source/Base.cpp" />
+    <ClCompile Include="Source/BoxToBox.cpp" />
+    <ClCompile Include="Source/Bresenham.cpp" />
+    <ClCompile Include="Source/Config.cpp" />
+    <ClCompile Include="Source/Container.cpp" />
+    <ClCompile Include="Source/Crc.cpp" />
+    <ClCompile Include="Source/File.cpp" />
+    <ClCompile Include="Source/Logger.cpp" />
+    <ClCompile Include="Source/Pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pch.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="Perlin.cpp" />
-    <ClCompile Include="Profiler.cpp" />
-    <ClCompile Include="Stream.cpp" />
-    <ClCompile Include="Math.cpp" />
-    <ClCompile Include="Test.cpp" />
-    <ClCompile Include="Text.cpp" />
-    <ClCompile Include="Timer.cpp" />
-    <ClCompile Include="Tokenizer.cpp" />
+    <ClCompile Include="Source/Perlin.cpp" />
+    <ClCompile Include="Source/Profiler.cpp" />
+    <ClCompile Include="Source/Stream.cpp" />
+    <ClCompile Include="Source/Math.cpp" />
+    <ClCompile Include="Source/Text.cpp" />
+    <ClCompile Include="Source/Timer.cpp" />
+    <ClCompile Include="Source/Tokenizer.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Doc\todo.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

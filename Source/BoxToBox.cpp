@@ -2,9 +2,8 @@
 // zaimportowane z bulleta, który to wzi¹³ z ODE
 
 #include "Pch.h"
-#include "Base.h"
-#include <float.h>
-#include "Math.h"
+#include "Core/Base.h"
+#include "Core/Math.h"
 
 #define BT_LARGE_FLOAT 1e18f
 

@@ -1,8 +1,8 @@
 #include "Pch.h"
-#include "Base.h"
-#include "Profiler.h"
-#include "Container.h"
-#include "Text.h"
+#include "Core/Base.h"
+#include "Core/Profiler.h"
+#include "Core/Container.h"
+#include "Core/Text.h"
 
 struct Profiler::Entry
 {

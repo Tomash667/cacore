@@ -1,8 +1,8 @@
 #include "Pch.h"
-#include "Base.h"
-#include "Tokenizer.h"
-#include "File.h"
-#include "Logger.h"
+#include "Core/Base.h"
+#include "Core/Tokenizer.h"
+#include "Core/File.h"
+#include "Core/Logger.h"
 
 using namespace tokenizer;
 

@@ -15,6 +15,7 @@
 #endif
 
 //-----------------------------------------------------------------------------
+#include <Windows.h>
 #include <cassert>
 #include <cstdio>
 #include <vector>
@@ -45,6 +46,4 @@ using std::list;
 using std::min;
 using std::max;
 
-//-----------------------------------------------------------------------------
-// use rand2
-#pragma deprecated (rand)
+#include "Core/Undefine.h"

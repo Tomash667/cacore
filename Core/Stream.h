@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Container.h"
-#include "Math.h"
+#include "Core/Container.h"
+#include "Core/Math.h"
 
 //-----------------------------------------------------------------------------
 // Buffer - used by MemoryStream

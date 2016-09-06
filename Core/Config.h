@@ -1,8 +1,8 @@
 // configuration reader/writer
 #pragma once
 
-#include "Math.h"
-#include "Tokenizer.h"
+#include "Core/Math.h"
+#include "Core/Tokenizer.h"
 
 //-----------------------------------------------------------------------------
 enum Bool3

@@ -1,6 +1,6 @@
 #include "Pch.h"
-#include "Base.h"
-#include "Crc.h"
+#include "Core/Base.h"
+#include "Core/Crc.h"
 
 const uint CRC32::m_tab[] = {
 	0x00000000L, 0x77073096L, 0xee0e612cL, 0x990951baL, 0x076dc419L,

@@ -1,123 +1,130 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
+    <Filter Include="Core">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="Source">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Doc">
+      <UniqueIdentifier>{8968072a-5dc4-424e-a2ca-5556f95a3b00}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Base.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Core/Base.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Config.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Core/Config.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Crc.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Core/Container.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Perlin.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Core/Core.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="QuadTree.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Core/CorePch.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Stream.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Core/Crc.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Timer.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Core/CriticalSection.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Tokenizer.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Core/File.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Pch.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Core/Logger.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Core.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Core/Math.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Math.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Core/Perlin.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Text.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Core/Profiler.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Container.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Core/QuadTree.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Profiler.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Core/Stream.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="File.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Core/Text.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Logger.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Core/Timer.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="CriticalSection.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Core/Tokenizer.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="CorePch.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Source/Pch.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Undefine.h">
+      <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="BoxToBox.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Source/Base.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Bresenham.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Source/BoxToBox.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Config.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Source/Bresenham.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Crc.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Source/Config.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Perlin.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Source/Container.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Stream.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Source/Crc.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Timer.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Source/File.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tokenizer.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Source/Logger.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Pch.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Source/Pch.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Math.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Source/Perlin.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Text.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Source/Profiler.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Logger.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Source/Stream.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Profiler.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Source/Math.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="File.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Source/Text.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Container.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Source/Timer.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Test.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Source/Tokenizer.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Doc\todo.txt">
+      <Filter>Doc</Filter>
+    </Text>
   </ItemGroup>
 </Project>

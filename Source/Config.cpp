@@ -1,7 +1,7 @@
 // configuration reader/writer
 #include "Pch.h"
-#include "Base.h"
-#include "Config.h"
+#include "Core/Base.h"
+#include "Core/Config.h"
 
 const int CONFIG_VERSION = 1;
 Tokenizer Config::t;

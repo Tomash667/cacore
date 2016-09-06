@@ -1,7 +1,7 @@
 #include "Pch.h"
-#include "Base.h"
-#include "Stream.h"
-#include "File.h"
+#include "Core/Base.h"
+#include "Core/Stream.h"
+#include "Core/File.h"
 
 //-----------------------------------------------------------------------------
 ObjectPool<Buffer> BufferPool;

@@ -1,6 +1,6 @@
 #include "Pch.h"
-#include "Base.h"
-#include "File.h"
+#include "Core/Base.h"
+#include "Core/File.h"
 
 DWORD tmp;
 char BUF[256];
@@ -105,7 +105,7 @@ void Crypt(char* inp, uint inplen, cstring key, uint keylen)
 	//we will consider size of sbox 256 bytes
 	//(extra byte are only to prevent any mishep just in case)
 	char Sbox[257], Sbox2[257];
-	unsigned long i, j, t, x;
+	uint i, j, t, x;
 
 	//this unsecured key is to be used only when there is no input key from user
 	char temp, k;
@@ -136,7 +136,7 @@ void Crypt(char* inp, uint inplen, cstring key, uint keylen)
 		   //scramble sbox1 with sbox2
 	for(i = 0; i < 256; i++)
 	{
-		j = (j + (unsigned long)Sbox[i] + (unsigned long)Sbox2[i]) % 256U;
+		j = (j + (uint)Sbox[i] + (uint)Sbox2[i]) % 256U;
 		temp = Sbox[i];
 		Sbox[i] = Sbox[j];
 		Sbox[j] = temp;
@@ -148,7 +148,7 @@ void Crypt(char* inp, uint inplen, cstring key, uint keylen)
 		//increment i
 		i = (i + 1U) % 256U;
 		//increment j
-		j = (j + (unsigned long)Sbox[i]) % 256U;
+		j = (j + (uint)Sbox[i]) % 256U;
 
 		//Scramble SBox #1 further so encryption routine will
 		//will repeat itself at great interval
@@ -157,7 +157,7 @@ void Crypt(char* inp, uint inplen, cstring key, uint keylen)
 		Sbox[j] = temp;
 
 		//Get ready to create pseudo random  byte for encryption key
-		t = ((unsigned long)Sbox[i] + (unsigned long)Sbox[j]) % 256U;
+		t = ((uint)Sbox[i] + (uint)Sbox[j]) % 256U;
 
 		//get the random byte
 		k = Sbox[t];

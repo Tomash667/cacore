@@ -1,6 +1,6 @@
 // czasomierz
 #include "Pch.h"
-#include "Timer.h"
+#include "Core/Timer.h"
 
 //=================================================================================================
 // Konstruktor zegara, uruchamia jeœli podano taki argument

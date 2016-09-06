@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CriticalSection.h"
+#include "Core/CriticalSection.h"
 
 //-----------------------------------------------------------------------------
 // Funkcje obs³uguj¹ce vector

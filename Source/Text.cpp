@@ -1,9 +1,9 @@
 #include "Pch.h"
-#include "Base.h"
-#include "Text.h"
-#include "Container.h"
-#include "Logger.h"
-#include "Math.h"
+#include "Core/Base.h"
+#include "Core/Text.h"
+#include "Core/Container.h"
+#include "Core/Logger.h"
+#include "Core/Math.h"
 
 static const uint FORMAT_STRINGS = 8;
 static const uint FORMAT_LENGTH = 2048;

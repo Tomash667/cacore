@@ -1,7 +1,7 @@
 // http://www.flipcode.com/archives/Perlin_Noise_Class.shtml
 #pragma once
 
-#include "Math.h"
+#include "Core/Math.h"
 
 class Perlin
 {

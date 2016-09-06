@@ -1,8 +1,23 @@
 #pragma once
 
 //-----------------------------------------------------------------------------
-// Bufor
+// Typy zmiennych
+typedef unsigned char byte;
+typedef unsigned short word;
+typedef unsigned int uint;
+typedef __int64 int64;
+typedef unsigned __int64 uint64;
+typedef const char* cstring;
 
+// 64 bit version not working propably anyway
+static_assert(sizeof(char) == 1, "Invalid char size.");
+static_assert(sizeof(short) == 2, "Invalid short size.");
+static_assert(sizeof(int) == 4, "Invalid int size.");
+static_assert(sizeof(long) == 4, "Invalid long size.");
+static_assert(sizeof(int64) == 8, "Invalid int64 size.");
+static_assert(sizeof(float) == 4, "Invalid float size.");
+static_assert(sizeof(double) == 8, "Invalid double size.");
+static_assert(sizeof(void*) == 4, "Invalid pointer size.");
 
 //-----------------------------------------------------------------------------
 // Kolory DWORD
@@ -47,12 +62,21 @@ char(&_ArraySizeHelper(T(&array)[N]))[N];
 
 //-----------------------------------------------------------------------------
 // Debugowanie
+#ifdef assert
+#	undef assert
+#endif
+typedef void(*AssertHandler)(cstring msg, cstring file, uint line);
+void assert_handler(cstring msg, cstring file, uint line);
+void set_assert_handler(AssertHandler handler);
+AssertHandler get_assert_handler();
 #ifdef _DEBUG
 #	define DEBUG_DO(x) (x)
 #	define C(x) assert(x)
+#	define assert(expression) (void)((!!(expression)) || (assert_handler(#expression, __FILE__, (uint)(__LINE__)), 0))
 #else
 #	define DEBUG_DO(x)
 #	define C(x) x
+#	define assert(expression) ((void)0)
 #endif
 #define __STR2__(x) #x
 #define __STR1__(x) __STR2__(x)
@@ -64,51 +88,12 @@ char(&_ArraySizeHelper(T(&array)[N]))[N];
 #endif
 
 //-----------------------------------------------------------------------------
-// Typy zmiennych
-typedef unsigned char byte;
-typedef unsigned short word;
-typedef unsigned int uint;
-typedef __int64 int64;
-typedef unsigned __int64 uint64;
-typedef const char* cstring;
-
-//-----------------------------------------------------------------------------
 // Delegates
 template<typename T>
 using delegate = ssvu::FastFunc<T>;
 typedef delegate<void()> VoidDelegate;
 typedef delegate<void()> VoidF;
 typedef delegate<void(cstring)> PrintMsgFunc;
-
-//-----------------------------------------------------------------------------
-// Pozosta³e funkcje
-//-----------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 //-----------------------------------------------------------------------------
 // RAII for simple pointer
@@ -157,4 +142,19 @@ inline T& offset_cast(void* data, uint offset)
 {
 	byte* b = ((byte*)data) + offset;
 	return *(T*)b;
+}
+
+//-----------------------------------------------------------------------------
+// Cast using union
+template<typename To, typename From>
+inline To union_cast(const From& f)
+{
+	union
+	{
+		To to;
+		From from;
+	} a;
+
+	a.from = f;
+	return a.to;
 }

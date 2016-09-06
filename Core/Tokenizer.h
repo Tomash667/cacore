@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Math.h"
-#include "Text.h"
-#include "Container.h"
+#include "Core/Math.h"
+#include "Core/Text.h"
+#include "Core/Container.h"
 
 namespace tokenizer
 {

@@ -1,6 +1,6 @@
 #include "Pch.h"
-#include "Base.h"
-#include "Math.h"
+#include "Core/Base.h"
+#include "Core/Math.h"
 
 RNG _RNG;
 

@@ -9,9 +9,10 @@ const float MAX_ANGLE = PI - FLT_EPSILON;
 
 //-----------------------------------------------------------------------------
 // Generator liczb pseudolosowych (z MSVC CRT)
+#pragma deprecated (rand)
 struct RNG
 {
-	unsigned long val;
+	uint val;
 
 	RNG() : val(1)
 	{

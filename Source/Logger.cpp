@@ -1,8 +1,8 @@
 #include "Pch.h"
-#include "Base.h"
-#include "Logger.h"
-#include "Text.h"
-#include "Container.h"
+#include "Core/Base.h"
+#include "Core/Logger.h"
+#include "Core/Text.h"
+#include "Core/Container.h"
 
 static cstring log_level_name[4] = {
 	"INFO ",
