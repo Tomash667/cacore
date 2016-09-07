@@ -32,9 +32,6 @@
 
 //-----------------------------------------------------------------------------
 // Included in Core
-#ifdef _DEBUG
-#	include "Visual Leak Detector\include\vld.h"
-#endif
 #include "Eigen\Core"
 #include "Eigen\Geometry"
 #include "FastFunc\FastFunc.h"
