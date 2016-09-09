@@ -260,7 +260,7 @@ void FrustumPlanes::Set(const MATRIX &WorldViewProj)
 	Planes[5].d = WorldViewProj._44 - WorldViewProj._43;
 
 	for(int i = 0; i < 6; ++i)
-		Planes[i].normalize_me();
+		Planes[i].Normalized();
 }
 
 // Uniwersalny, brakuj¹cy w C++ operator dos³ownego rzutowania (reintepretacji)
@@ -338,7 +338,7 @@ void FrustumPlanes::GetPoints(const MATRIX& WorldViewProj, VEC3* points)
 {
 	assert(points);
 
-	MATRIX WorldViewProjInv = WorldViewProj.inverse();
+	MATRIX WorldViewProjInv = WorldViewProj.Inverse();
 
 	VEC3 P[] = {
 		VEC3(-1.f, -1.f, 0.f), VEC3(+1.f, -1.f, 0.f),
@@ -347,7 +347,7 @@ void FrustumPlanes::GetPoints(const MATRIX& WorldViewProj, VEC3* points)
 		VEC3(-1.f, +1.f, 1.f), VEC3(+1.f, +1.f, 1.f) };
 
 	for(int i = 0; i < 8; ++i)
-		points[0] = WorldViewProjInv.transform_coord(P[i]);
+		points[0] = WorldViewProjInv.TransformCoord(P[i]);
 }
 
 /*void FrustumPlanes::GetFrustumBox(BOX& box) const
@@ -375,7 +375,7 @@ bool FrustumPlanes::PointInFrustum(const VEC3 &p) const
 {
 	for(int i = 0; i < 6; ++i)
 	{
-		if(Planes[i].dot(p) <= 0.f)
+		if(Planes[i].Dot(p) <= 0.f)
 			return false;
 	}
 
@@ -404,7 +404,7 @@ bool FrustumPlanes::BoxToFrustum(const BOX &Box) const
 		else
 			vmin.z = Box.v2.z;
 
-		if(Planes[i].dot(vmin) < 0.0f)
+		if(Planes[i].Dot(vmin) < 0.0f)
 			return false;
 	}
 
@@ -432,7 +432,7 @@ int FrustumPlanes::BoxToFrustum2(const BOX &Box) const
 		else
 			vmin.z = Box.v2.z;
 
-		if(Planes[i].dot(vmin) < 0.0f)
+		if(Planes[i].Dot(vmin) < 0.0f)
 		{
 			if(i == 5)
 				return 1;
@@ -465,7 +465,7 @@ bool FrustumPlanes::BoxToFrustum(const BOX2D& box) const
 		else
 			vmin.z = box.v2.y;
 
-		if(Planes[i].dot(vmin) < 0.0f)
+		if(Planes[i].Dot(vmin) < 0.0f)
 			return false;
 	}
 
@@ -493,7 +493,7 @@ bool FrustumPlanes::SphereToFrustum(const VEC3 &SphereCenter, float SphereRadius
 
 	for(int i = 0; i < 6; ++i)
 	{
-		if(Planes[i].dot(SphereCenter) <= SphereRadius)
+		if(Planes[i].Dot(SphereCenter) <= SphereRadius)
 			return false;
 	}
 
@@ -504,7 +504,7 @@ bool FrustumPlanes::SphereInFrustum(const VEC3 &SphereCenter, float SphereRadius
 {
 	for(int i = 0; i < 6; ++i)
 	{
-		if(Planes[0].dot(SphereCenter) < SphereRadius)
+		if(Planes[0].Dot(SphereCenter) < SphereRadius)
 			return false;
 	}
 
@@ -542,9 +542,9 @@ bool RayToSphere(const VEC3& _ray_pos, const VEC3& _ray_dir, const VEC3& _center
 	// link znaleziony na:
 	// http://www.realtimerendering.com/int/
 	VEC3 RayOrig_minus_SphereCenter = _ray_pos - _center;
-	float a = _ray_dir.dot(_ray_dir); // ?
-	float b = 2.f * _ray_dir.dot(RayOrig_minus_SphereCenter);
-	float c = RayOrig_minus_SphereCenter.dot(RayOrig_minus_SphereCenter) - (_radius * _radius);
+	float a = _ray_dir.Dot(_ray_dir); // ?
+	float b = 2.f * _ray_dir.Dot(RayOrig_minus_SphereCenter);
+	float c = RayOrig_minus_SphereCenter.Dot(RayOrig_minus_SphereCenter) - (_radius * _radius);
 	float Delta = b * b - 4.f * a * c;
 
 	if(Delta < 0.f)
@@ -583,10 +583,10 @@ bool RayToTriangle(const VEC3& _ray_pos, const VEC3& _ray_dir, const VEC3& _v1, 
 	VEC3 edge2 = _v3 - _v1;
 
 	// begin calculating determinant - also used to calculate U parameter
-	pvec = _ray_dir.cross(edge2);
+	pvec = _ray_dir.Cross(edge2);
 
 	// if determinant is near zero, ray lies in plane of triangle
-	float det = edge1.dot(pvec);
+	float det = edge1.Dot(pvec);
 	//if (BackfaceCulling && det < 0.0f)
 	//	return false;
 	if(FLOAT_ALMOST_ZERO(det))
@@ -597,20 +597,20 @@ bool RayToTriangle(const VEC3& _ray_pos, const VEC3& _ray_dir, const VEC3& _v1, 
 	tvec = _ray_pos - _v1;
 
 	// calculate U parameter and test bounds
-	float u = tvec.dot(pvec) * inv_det;
+	float u = tvec.Dot(pvec) * inv_det;
 	if(u < 0.0f || u > 1.0f)
 		return false;
 
 	// prepare to test V parameter
-	qvec = tvec.cross(edge1);
+	qvec = tvec.Cross(edge1);
 
 	// calculate V parameter and test bounds
-	float v = _ray_dir.dot(qvec) * inv_det;
+	float v = _ray_dir.Dot(qvec) * inv_det;
 	if(v < 0.0f || u + v > 1.0f)
 		return false;
 
 	// calculate t, ray intersects triangle
-	_dist = edge2.dot(qvec) * inv_det;
+	_dist = edge2.Dot(qvec) * inv_det;
 	return true;
 }
 
@@ -687,8 +687,8 @@ bool LineToRectangle(const VEC2& start, const VEC2& end, const VEC2& rect_pos, c
 
 void CreateAABBOX(BOX& out, const MATRIX& mat)
 {
-	VEC3 v1 = mat.transform_coord(VEC3(-2, -2, -2));
-	VEC3 v2 = mat.transform_coord(VEC3(2, 2, 2));
+	VEC3 v1 = mat.TransformCoord(VEC3(-2, -2, -2));
+	VEC3 v2 = mat.TransformCoord(VEC3(2, 2, 2));
 	out.Create(v1, v2);
 }
 
@@ -911,18 +911,18 @@ bool RotatedRectanglesCollision(const RotRect& r1, const RotRect& r2)
 int RayToCylinder(const VEC3& sa, const VEC3& sb, const VEC3& p, const VEC3& q, float r, float& t)
 {
 	VEC3 d = q - p, m = sa - p, n = sb - sa;
-	float md = m.dot(d);
-	float nd = n.dot(d);
-	float dd = d.dot(d);
+	float md = m.Dot(d);
+	float nd = n.Dot(d);
+	float dd = d.Dot(d);
 	// Test if segment fully outside either endcap of cylinder
 	if(md < 0.0f && md + nd < 0.0f)
 		return 0; // Segment outside 'p' side of cylinder
 	if(md > dd && md + nd > dd)
 		return 0; // Segment outside 'q' side of cylinder
-	float nn = n.dot(n);
-	float mn = m.dot(n);
+	float nn = n.Dot(n);
+	float mn = m.Dot(n);
 	float a = dd * nn - nd * nd;
-	float k = m.dot(m) - r * r;
+	float k = m.Dot(m) - r * r;
 	float c = dd * k - md * md;
 	if(is_zero(a))
 	{
@@ -979,11 +979,11 @@ bool OOBToOOB(const OOB& a, const OOB& b)
 	// Compute rotation matrix expressing b in a’s coordinate frame
 	for(int i = 0; i < 3; i++)
 		for(int j = 0; j < 3; j++)
-			R[i][j] = a.u[i].dot(b.u[j]);
+			R[i][j] = a.u[i].Dot(b.u[j]);
 	// Compute translation vector t
 	VEC3 t = b.c - a.c;
 	// Bring translation into a’s coordinate frame
-	t = VEC3(t.dot(a.u[0]), t.dot(a.u[2]), t.dot(a.u[2]));
+	t = VEC3(t.Dot(a.u[0]), t.Dot(a.u[2]), t.Dot(a.u[2]));
 	// Compute common subexpressions. Add in an epsilon term to
 	// counteract arithmetic errors when two edges are parallel and
 	// their cross product is (near) null (see text for details)
@@ -1061,8 +1061,8 @@ float GetClosestPointOnLineSegment(const VEC2& A, const VEC2& B, const VEC2& P, 
 	VEC2 AP = P - A;       //Vector from A to P   
 	VEC2 AB = B - A;       //Vector from A to B  
 
-	float magnitudeAB = AB.length_sq(); //Magnitude of AB vector (it's length squared)     
-	float ABAPproduct = AP.dot(AB); //The DOT product of a_to_p and a_to_b     
+	float magnitudeAB = AB.LengthSq(); //Magnitude of AB vector (it's length squared)     
+	float ABAPproduct = AP.Dot(AB); //The DOT product of a_to_p and a_to_b     
 	float distance = ABAPproduct / magnitudeAB; //The normalized "distance" from a to your closest point  
 
 	if(distance < 0)     //Check if P projection is over vectorAB     
@@ -1170,3 +1170,277 @@ const VEC2 POISSON_DISC_2D[] = {
 	VEC2(0.9577024f, 0.1808657f)
 };
 const int poisson_disc_count = countof(POISSON_DISC_2D);
+
+// Calculate inverted matrix, source and dest can't be same matrix
+bool InvertMatrix(const MATRIX& m, MATRIX& inv, float* det_out)
+{
+	assert(&m != &inv);
+	
+	inv[0] = m[5] * m[10] * m[15] -
+		m[5] * m[11] * m[14] -
+		m[9] * m[6] * m[15] +
+		m[9] * m[7] * m[14] +
+		m[13] * m[6] * m[11] -
+		m[13] * m[7] * m[10];
+
+	inv[4] = -m[4] * m[10] * m[15] +
+		m[4] * m[11] * m[14] +
+		m[8] * m[6] * m[15] -
+		m[8] * m[7] * m[14] -
+		m[12] * m[6] * m[11] +
+		m[12] * m[7] * m[10];
+
+	inv[8] = m[4] * m[9] * m[15] -
+		m[4] * m[11] * m[13] -
+		m[8] * m[5] * m[15] +
+		m[8] * m[7] * m[13] +
+		m[12] * m[5] * m[11] -
+		m[12] * m[7] * m[9];
+
+	inv[12] = -m[4] * m[9] * m[14] +
+		m[4] * m[10] * m[13] +
+		m[8] * m[5] * m[14] -
+		m[8] * m[6] * m[13] -
+		m[12] * m[5] * m[10] +
+		m[12] * m[6] * m[9];	
+
+	float det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
+	if(det_out)
+		*det_out = det;
+
+	if(det == 0)
+		return false;
+
+	inv[1] = -m[1] * m[10] * m[15] +
+		m[1] * m[11] * m[14] +
+		m[9] * m[2] * m[15] -
+		m[9] * m[3] * m[14] -
+		m[13] * m[2] * m[11] +
+		m[13] * m[3] * m[10];
+
+	inv[5] = m[0] * m[10] * m[15] -
+		m[0] * m[11] * m[14] -
+		m[8] * m[2] * m[15] +
+		m[8] * m[3] * m[14] +
+		m[12] * m[2] * m[11] -
+		m[12] * m[3] * m[10];
+
+	inv[9] = -m[0] * m[9] * m[15] +
+		m[0] * m[11] * m[13] +
+		m[8] * m[1] * m[15] -
+		m[8] * m[3] * m[13] -
+		m[12] * m[1] * m[11] +
+		m[12] * m[3] * m[9];
+
+	inv[13] = m[0] * m[9] * m[14] -
+		m[0] * m[10] * m[13] -
+		m[8] * m[1] * m[14] +
+		m[8] * m[2] * m[13] +
+		m[12] * m[1] * m[10] -
+		m[12] * m[2] * m[9];
+
+	inv[2] = m[1] * m[6] * m[15] -
+		m[1] * m[7] * m[14] -
+		m[5] * m[2] * m[15] +
+		m[5] * m[3] * m[14] +
+		m[13] * m[2] * m[7] -
+		m[13] * m[3] * m[6];
+
+	inv[6] = -m[0] * m[6] * m[15] +
+		m[0] * m[7] * m[14] +
+		m[4] * m[2] * m[15] -
+		m[4] * m[3] * m[14] -
+		m[12] * m[2] * m[7] +
+		m[12] * m[3] * m[6];
+
+	inv[10] = m[0] * m[5] * m[15] -
+		m[0] * m[7] * m[13] -
+		m[4] * m[1] * m[15] +
+		m[4] * m[3] * m[13] +
+		m[12] * m[1] * m[7] -
+		m[12] * m[3] * m[5];
+
+	inv[14] = -m[0] * m[5] * m[14] +
+		m[0] * m[6] * m[13] +
+		m[4] * m[1] * m[14] -
+		m[4] * m[2] * m[13] -
+		m[12] * m[1] * m[6] +
+		m[12] * m[2] * m[5];
+
+	inv[3] = -m[1] * m[6] * m[11] +
+		m[1] * m[7] * m[10] +
+		m[5] * m[2] * m[11] -
+		m[5] * m[3] * m[10] -
+		m[9] * m[2] * m[7] +
+		m[9] * m[3] * m[6];
+
+	inv[7] = m[0] * m[6] * m[11] -
+		m[0] * m[7] * m[10] -
+		m[4] * m[2] * m[11] +
+		m[4] * m[3] * m[10] +
+		m[8] * m[2] * m[7] -
+		m[8] * m[3] * m[6];
+
+	inv[11] = -m[0] * m[5] * m[11] +
+		m[0] * m[7] * m[9] +
+		m[4] * m[1] * m[11] -
+		m[4] * m[3] * m[9] -
+		m[8] * m[1] * m[7] +
+		m[8] * m[3] * m[5];
+
+	inv[15] = m[0] * m[5] * m[10] -
+		m[0] * m[6] * m[9] -
+		m[4] * m[1] * m[10] +
+		m[4] * m[2] * m[9] +
+		m[8] * m[1] * m[6] -
+		m[8] * m[2] * m[5];
+
+	det = 1.0f / det;
+
+	for(int i = 0; i < 16; i++)
+		inv[i] *= det;
+
+	return true;
+}
+
+MATRIX MATRIX::Transformation2D(const VEC2* scaling_center, float scaling_rotation, const VEC2* scaling, const VEC2* rotation_center, float rotation,
+	const VEC2* translation)
+{
+	QUAT rot, sca_rot;
+	VEC3 rot_center, sca, sca_center, trans;
+	
+	if(scaling_center)
+	{
+		sca_center.x = scaling_center->x;
+		sca_center.y = scaling_center->y;
+		sca_center.z = 0.0f;
+	}
+	else
+	{
+		sca_center.x = 0.0f;
+		sca_center.y = 0.0f;
+		sca_center.z = 0.0f;
+	}
+
+	if(scaling)
+	{
+		sca.x = scaling->x;
+		sca.y = scaling->y;
+		sca.z = 1.0f;
+	}
+	else
+	{
+		sca.x = 1.0f;
+		sca.y = 1.0f;
+		sca.z = 1.0f;
+	}
+
+	if(rotation_center)
+	{
+		rot_center.x = rotation_center->x;
+		rot_center.y = rotation_center->y;
+		rot_center.z = 0.0f;
+	}
+	else
+	{
+		rot_center.x = 0.0f;
+		rot_center.y = 0.0f;
+		rot_center.z = 0.0f;
+	}
+
+	if(translation)
+	{
+		trans.x = translation->x;
+		trans.y = translation->y;
+		trans.z = 0.0f;
+	}
+	else
+	{
+		trans.x = 0.0f;
+		trans.y = 0.0f;
+		trans.z = 0.0f;
+	}
+
+	rot.w = cosf(rotation / 2.0f);
+	rot.x = 0.0f;
+	rot.y = 0.0f;
+	rot.z = sinf(rotation / 2.0f);
+
+	sca_rot.w = cosf(scaling_rotation / 2.0f);
+	sca_rot.x = 0.0f;
+	sca_rot.y = 0.0f;
+	sca_rot.z = sinf(scaling_rotation / 2.0f);
+
+	return Transformation(&sca_center, &sca_rot, &sca, &rot_center, &rot, &trans);
+}
+
+MATRIX MATRIX::Transformation(const VEC3* scaling_center, const QUAT* scaling_rotation, const VEC3* scaling, const VEC3* rotation_center,
+	const QUAT* rotation, const VEC3* translation)
+{
+	QUAT prc;
+	VEC3 psc, pt;
+	
+	if(!scaling_center)
+	{
+		psc.x = 0.0f;
+		psc.y = 0.0f;
+		psc.z = 0.0f;
+	}
+	else
+	{
+		psc.x = scaling_center->x;
+		psc.y = scaling_center->y;
+		psc.z = scaling_center->z;
+	}
+
+	if(!rotation_center)
+	{
+		prc.x = 0.0f;
+		prc.y = 0.0f;
+		prc.z = 0.0f;
+	}
+	else
+	{
+		prc.x = rotation_center->x;
+		prc.y = rotation_center->y;
+		prc.z = rotation_center->z;
+	}
+
+	if(!translation)
+	{
+		pt.x = 0.0f;
+		pt.y = 0.0f;
+		pt.z = 0.0f;
+	}
+	else
+	{
+		pt.x = translation->x;
+		pt.y = translation->y;
+		pt.z = translation->z;
+	}
+
+	MATRIX m = Translation(-psc.x, -psc.y, -psc.z),
+		m_rot,
+		m_rot_inv;
+
+	if(!scaling_rotation)
+	{
+		m_rot.Identity();
+		m_rot_inv.Identity();
+	}
+	else
+	{
+		m_rot = Rotation(*scaling_rotation);
+		m_rot_inv = m_rot.Inverse();
+	}
+	
+	m *= m_rot_inv;
+	if(scaling)
+		m *= Scaling(*scaling);
+	m *= m_rot;
+	m *= Translation(psc.x - prc.x, psc.y - prc.y, psc.z - prc.z);
+	if(rotation)
+		m *= Rotation(*rotation);
+	m *= Translation(prc.x + pt.x, prc.y + pt.y, prc.z + pt.z);
+	return m;
+}

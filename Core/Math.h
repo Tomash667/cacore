@@ -294,17 +294,56 @@ struct INT2;
 struct VEC2;
 struct VEC3;
 struct VEC4;
+struct MATRIX;
+struct PLANE;
+struct QUAT;
+
+template<uint ROWS, uint COLS>
+struct XMatrix
+{
+	float array[ROWS][COLS];
+
+	inline void Zero()
+	{
+		memset(array, 0, sizeof(array));
+	}
+
+	inline float& operator () (uint row, uint col)
+	{
+		return array[row][col];
+	}
+
+	inline float operator () (uint row, uint col) const
+	{
+		return array[row][col];
+	}
+};
+
+template<uint ROWS, uint INTERNAL, uint COLS>
+void MultiplyMatrix(XMatrix<ROWS, COLS>& result,
+	const XMatrix<ROWS, INTERNAL>& lhs,
+	const XMatrix<INTERNAL, COLS>& rhs)
+{
+	result.Zero();
+
+	// p. 150 Numerical Analysis (second ed.)
+	// if A is m x p, and B is p x n, then AB is m x n
+	// (AB)ij  =  [k = 1 to p] (a)ik (b)kj     (where:  1 <= i <= m, 1 <= j <= n)
+	for(uint i = 0; i < ROWS; ++i)           // 1 <= i <= m
+		for(uint j = 0; j < COLS; ++j)           // 1 <= j <= n
+			for(uint k = 0; k < INTERNAL; ++k)       // [k = 1 to p]
+				result(i, j) += lhs(i, k) * rhs(k, j);
+}
+
+bool InvertMatrix(const MATRIX& m, MATRIX& inv, float* det_out);
 
 //-----------------------------------------------------------------------------
 // Punkt na liczbach ca³kowitych
 //-----------------------------------------------------------------------------
 struct INT2
 {
-	typedef Eigen::Vector2i Type;
-
 	union
 	{
-		Type ev;
 		struct
 		{
 			int x;
@@ -316,14 +355,16 @@ struct INT2
 	inline INT2() {}
 	inline explicit INT2(int v) : x(v), y(v) {}
 	inline INT2(int x, int y) : x(x), y(y) {}
+	template<typename T, typename T2>
+	inline INT2(T x, T2 y) : x((int)x), y((int)y) {}
 	inline INT2(const INT2& v) : x(v.x), y(v.y) {}
-	inline INT2(const Type& ev) : ev(ev) {}
 	explicit INT2(const VEC2& v);
 	explicit INT2(const VEC3& v);
 
 	inline INT2& operator = (const INT2& v)
 	{
-		ev = v.ev;
+		x = v.x;
+		y = v.y;
 		return *this;
 	}
 
@@ -423,23 +464,16 @@ struct INT2
 		y /= a;
 	}
 
-	inline int lerp(float t) const
+	inline int Lerp(float t) const
 	{
 		return int(t*(y - x)) + x;
 	}
 
-	inline int random() const
+	inline int Random() const
 	{
 		return ::random(x, y);
 	}
 };
-
-static_assert(sizeof(INT2) == sizeof(int) * 2, "INT2 size mismatch.");
-
-inline int random(const INT2& a)
-{
-	return random(a.x, a.y);
-}
 
 inline INT2 random(const INT2& a, const INT2& b)
 {
@@ -524,27 +558,25 @@ struct Rect
 //-----------------------------------------------------------------------------
 struct VEC2
 {
-	typedef Eigen::Vector2f Type;
-
 	union
 	{
-		Type ev;
 		struct
 		{
 			float x;
 			float y;
 		};
 		float array[2];
+		XMatrix<2, 1> xm;
 	};
 
 	inline VEC2() {}
 	inline VEC2(float x, float y) : x(x), y(y) {}
 	inline VEC2(const VEC2& v) : x(v.x), y(v.y) {}
-	inline explicit VEC2(const Type& ev) : ev(ev) {}
 
 	inline VEC2& operator = (const VEC2& v)
 	{
-		ev = v.ev;
+		x = v.x;
+		y = v.y;
 		return *this;
 	}
 
@@ -560,12 +592,12 @@ struct VEC2
 
 	inline bool operator == (const VEC2& v) const
 	{
-		return ev == v.ev;
+		return x == v.x && y == v.y;
 	}
 
 	inline bool operator != (const VEC2& v) const
 	{
-		return ev != v.ev;
+		return x != v.x || y != v.y;
 	}
 
 	inline float& operator [](int index)
@@ -587,81 +619,99 @@ struct VEC2
 
 	inline VEC2 operator - () const
 	{
-		return VEC2(-ev);
+		return VEC2(-x, -y);
 	}
 
 	inline VEC2 operator + (const VEC2& v) const
 	{
-		return VEC2(ev + v.ev);
+		return VEC2(x + v.x, y + v.y);
 	}
 
 	inline VEC2 operator - (const VEC2& v) const
 	{
-		return VEC2(ev - v.ev);
+		return VEC2(x - v.x, y - v.y);
 	}
 
 	inline VEC2 operator * (float f) const
 	{
-		return VEC2(ev * f);
+		return VEC2(x * f, y * f);
 	}
 
 	inline VEC2 operator / (float f) const
 	{
-		return VEC2(ev / f);
+		return VEC2(x / f, y / f);
 	}
 
 	inline void operator += (const VEC2& v)
 	{
-		ev += v.ev;
+		x += v.x;
+		y += v.y;
 	}
 
 	inline void operator -= (const VEC2& v)
 	{
-		ev -= v.ev;
+		x -= v.x;
+		y -= v.y;
 	}
 
 	inline void operator *= (float f)
 	{
-		ev *= f;
+		x *= f;
+		y *= f;
 	}
 
 	inline void operator /= (float f)
 	{
-		ev /= f;
-	}
-	
-	inline float dot(const VEC2& v) const
-	{
-		return ev.dot(v.ev);
+		x /= f;
+		y /= f;
 	}
 
-	inline float length_sq() const
+	inline float Dot(const VEC2& v) const
 	{
-		return ev.squaredNorm();
+		return x*v.x + y*v.y;
 	}
 
-	inline VEC2 normalize() const
+	inline float Length() const
 	{
-		return VEC2(ev.normalized());
+		return sqrt(LengthSq());
 	}
 
-	inline void normalize_me()
+	inline float LengthSq() const
 	{
-		ev.normalize();
+		return x*x + y*y;
 	}
 
-	inline float random() const
+	inline VEC2 Normalize() const
+	{
+		float a = Length();
+		return VEC2(x / a, y / a);
+	}
+
+	inline void Normalized()
+	{
+		float a = Length();
+		x /= a;
+		y /= a;
+	}
+
+	inline float Random() const
 	{
 		return ::random(x, y);
 	}
 
-	inline VEC2 wrap() const
+	inline VEC2 Wrap() const
 	{
 		return VEC2(::wrap(x), ::wrap(y));
 	}
-};
 
-static_assert(sizeof(VEC2) == sizeof(float) * 2, "VEC2 size mismatch.");
+	inline static VEC2 Lerp(const VEC2& v1, const VEC2& v2, float t)
+	{
+		VEC2 v;
+		v.x = (1.f - t) * v1.x + t * v2.x;
+		v.y = (1.f - t) * v1.y + t * v2.y;
+		return v;
+	}
+};
 
 inline VEC2 random_circle_pt(float r)
 {
@@ -751,6 +801,11 @@ inline void Max(const VEC2& v1, const VEC2& v2, VEC2& out)
 	out.y = max(v1.y, v2.y);
 }
 
+inline VEC2 slerp(const VEC2& a, const VEC2& b, float t)
+{
+	return VEC2(slerp(a.x, b.x, t), slerp(a.y, b.y, t));
+}
+
 struct VEC2P
 {
 	float x, y;
@@ -761,11 +816,8 @@ struct VEC2P
 //-----------------------------------------------------------------------------
 struct VEC3
 {
-	typedef Eigen::Vector3f Type;
-
 	union
 	{
-		Type ev;
 		struct
 		{
 			float x;
@@ -773,16 +825,18 @@ struct VEC3
 			float z;
 		};
 		float array[3];
+		XMatrix<3, 1> xm;
 	};
 
 	inline VEC3() {}
 	inline VEC3(float x, float y, float z) : x(x), y(y), z(z) {}
 	inline VEC3(const VEC3& v) : x(v.x), y(v.y), z(v.z) {}
-	inline explicit VEC3(const Type& ev) : ev(ev) {}
 
 	inline VEC3& operator = (const VEC3& v)
 	{
-		ev = v.ev;
+		x = v.x;
+		y = v.y;
+		z = v.z;
 		return *this;
 	}
 
@@ -798,12 +852,12 @@ struct VEC3
 
 	inline bool operator == (const VEC3& v) const
 	{
-		return ev == v.ev;
+		return x == v.x && y == v.y && z == v.z;
 	}
 
 	inline bool operator != (const VEC3& v) const
 	{
-		return ev != v.ev;
+		return x != v.x || y != v.y || z != v.z;
 	}
 
 	inline float& operator [](int index)
@@ -825,61 +879,105 @@ struct VEC3
 
 	inline VEC3 operator - () const
 	{
-		return VEC3(-ev);
+		return VEC3(-x, -y, -z);
 	}
 
 	inline VEC3 operator + (const VEC3& v) const
 	{
-		return VEC3(ev + v.ev);
+		return VEC3(x + v.x, y + v.y, z + v.z);
 	}
 
 	inline VEC3 operator - (const VEC3& v) const
 	{
-		return VEC3(ev - v.ev);
+		return VEC3(x - v.x, y - v.y, z - v.z);
 	}
 
 	inline VEC3 operator * (float f) const
 	{
-		return VEC3(ev * f);
+		return VEC3(x * f, y * f, z * f);
 	}
 
 	inline VEC3 operator / (float f) const
 	{
-		return VEC3(ev / f);
+		return VEC3(x / f, y / f, z / f);
 	}
 
 	inline void operator += (const VEC3& v)
 	{
-		ev += v.ev;
+		x += v.x;
+		y += v.y;
+		z += v.z;
 	}
 
 	inline void operator -= (const VEC3& v)
 	{
-		ev -= v.ev;
+		x -= v.x;
+		y -= v.y;
+		z -= v.z;
 	}
 
 	inline void operator *= (float f)
 	{
-		ev *= f;
+		x *= f;
+		y *= f;
+		z *= f;
 	}
 
 	inline void operator /= (float f)
 	{
-		ev /= f;
+		x /= f;
+		y /= f;
+		z /= f;
 	}
 
-	inline VEC3 cross(const VEC3& v) const
+	inline VEC3 Cross(const VEC3& v) const
 	{
-		return VEC3(ev.cross(v.ev));
+		return VEC3(
+			y * v.z - z * v.y,
+			z * v.x - x * v.z,
+			x * v.y - y * v.x);
 	}
 
-	inline float dot(const VEC3& v) const
+	inline float Dot(const VEC3& v) const
 	{
-		return ev.dot(v.ev);
+		return x*v.x + y*v.y + z*v.z;
+	}
+
+	inline float Length() const
+	{
+		return sqrt(LengthSq());
+	}
+
+	inline float LengthSq() const
+	{
+		return x*x + y*y + z*z;
+	}
+
+	inline VEC3 Normalize() const
+	{
+		float a = Length();
+		return VEC3(x / a, y / a, z / a);
+	}
+
+	inline void Normalized()
+	{
+		float a = Length();
+		x /= a;
+		y /= a;
+		z /= a;
+	}
+
+	inline VEC4 ToVEC4(float w = 1.f) const;
+
+	inline static VEC3 Lerp(const VEC3& v1, const VEC3& v2, float t)
+	{
+		VEC3 v;
+		v.x = (1.f - t) * v1.x + t * v2.x;
+		v.y = (1.f - t) * v1.y + t * v2.y;
+		v.z = (1.f - t) * v1.z + t * v2.z;
+		return v;
 	}
 };
-
-static_assert(sizeof(VEC3) == sizeof(float) * 3, "VEC3 size mismatch.");
 
 inline void MinMax(const VEC3& a, const VEC3& b, VEC3& _min, VEC3& _max)
 {
@@ -996,10 +1094,8 @@ struct VEC3P
 //-----------------------------------------------------------------------------
 struct VEC4
 {
-	typedef Eigen::Vector4f Type;
 	union
 	{
-		Type ev;
 		struct
 		{
 			float x;
@@ -1008,17 +1104,20 @@ struct VEC4
 			float w;
 		};
 		float array[4];
+		XMatrix<4, 1> xm;
 	};
 
 	inline VEC4() {}
 	inline VEC4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
 	inline VEC4(const VEC4& v) : x(v.x), y(v.y), z(v.z), w(v.w) {}
 	inline explicit VEC4(const VEC3& v, float w = 1.f) : x(v.x), y(v.y), z(v.z), w(w) {}
-	inline explicit VEC4(const Type& ev) : ev(ev) {}
 
 	inline VEC4& operator = (const VEC4& v)
 	{
-		ev = v.ev;
+		x = v.x;
+		y = v.y;
+		z = v.z;
+		w = v.w;
 		return *this;
 	}
 
@@ -1034,12 +1133,12 @@ struct VEC4
 
 	inline bool operator == (const VEC4& v) const
 	{
-		return ev == v.ev;
+		return x == v.x && y == v.y && z == v.z && w == v.w;
 	}
 
 	inline bool operator != (const VEC4& v) const
 	{
-		return ev != v.ev;
+		return x != v.x || y != v.y || z != v.z || w != v.w;
 	}
 
 	inline float& operator [](int index)
@@ -1061,51 +1160,101 @@ struct VEC4
 
 	inline VEC4 operator - () const
 	{
-		return VEC4(-ev);
+		return VEC4(-x, -y, -z, -w);
 	}
 
 	inline VEC4 operator + (const VEC4& v) const
 	{
-		return VEC4(ev + v.ev);
+		return VEC4(x + v.x, y + v.y, z + v.z, w + v.w);
 	}
 
 	inline VEC4 operator - (const VEC4& v) const
 	{
-		return VEC4(ev - v.ev);
+		return VEC4(x - v.x, y - v.y, z - v.z, w - v.w);
 	}
 
 	inline VEC4 operator * (float f) const
 	{
-		return VEC4(ev * f);
+		return VEC4(x * f, y * f, z * f, w * f);
 	}
 
 	inline VEC4 operator / (float f) const
 	{
-		return VEC4(ev / f);
+		return VEC4(x / f, y / f, z / f, w / f);
 	}
 
 	inline void operator += (const VEC4& v)
 	{
-		ev += v.ev;
+		x += v.x;
+		y += v.y;
+		z += v.z;
+		w += v.w;
 	}
 
 	inline void operator -= (const VEC4& v)
 	{
-		ev -= v.ev;
+		x -= v.x;
+		y -= v.y;
+		z -= v.z;
+		w -= v.w;
 	}
 
 	inline void operator *= (float f)
 	{
-		ev *= f;
+		x *= f;
+		y *= f;
+		z *= f;
+		w *= f;
 	}
 
 	inline void operator /= (float f)
 	{
-		ev /= f;
+		x /= f;
+		y /= f;
+		z /= f;
+		w /= f;
+	}
+
+	inline bool Equal(const VEC4& v) const
+	{
+		return equal(x, v.x) && equal(y, v.y) && equal(z, v.z) && equal(w, v.w);
+	}
+
+	inline float Length() const
+	{
+		return sqrt(LengthSq());
+	}
+
+	inline float LengthSq() const
+	{
+		return x*x + y*y + z*z + w*w;
+	}
+
+	inline VEC4 Normalize() const
+	{
+		float a = Length();
+		return VEC4(x / a, y / a, z / a, w / a);
+	}
+
+	inline void Normalized()
+	{
+		float a = Length();
+		x /= a;
+		y /= a;
+		z /= a;
+		w /= a;
+	}
+
+	inline static VEC4 Lerp(const VEC4& v1, const VEC4& v2, float t)
+	{
+		VEC4 v;
+		v.x = (1.f - t) * v1.x + t * v2.x;
+		v.y = (1.f - t) * v1.y + t * v2.y;
+		v.z = (1.f - t) * v1.z + t * v2.z;
+		v.w = (1.f - t) * v1.w + t * v2.w;
+		return v;
 	}
 };
-
-static_assert(sizeof(VEC4) == sizeof(float) * 4, "VEC4 size mismatch.");
 
 inline VEC4 clamp(const VEC4& v)
 {
@@ -1113,11 +1262,6 @@ inline VEC4 clamp(const VEC4& v)
 		clamp(v.y, 0.f, 1.f),
 		clamp(v.z, 0.f, 1.f),
 		clamp(v.w, 0.f, 1.f));
-}
-
-inline bool equal(const VEC4& v1, const VEC4& v2)
-{
-	return equal(v1.x, v2.x) && equal(v1.y, v2.y) && equal(v1.z, v2.z) && equal(v1.w, v2.w);
 }
 
 //-----------------------------------------------------------------------------
@@ -1328,11 +1472,8 @@ struct BOX
 //-----------------------------------------------------------------------------
 struct MATRIX
 {
-	typedef Eigen::Matrix4f Type;
-
 	union
 	{
-		Type ev;
 		struct
 		{
 			float _11, _12, _13, _14,
@@ -1341,15 +1482,18 @@ struct MATRIX
 				_41, _42, _43, _44;
 		};
 		float array[4][4];
+		float array2[16];
+		XMatrix<4, 4> xm;
 	};
 
 	inline MATRIX() {}
-	inline MATRIX(const MATRIX& m) : ev(m.ev) {}
-	inline explicit MATRIX(const Type& ev) : ev(ev) {}
 
 	inline MATRIX& operator = (const MATRIX& m)
 	{
-		ev = m.ev;
+		_11 = m._11; _12 = m._12; _13 = m._13; _14 = m._14;
+		_21 = m._21; _22 = m._22; _23 = m._23; _24 = m._24;
+		_31 = m._31; _32 = m._32; _33 = m._33; _34 = m._34;
+		_41 = m._41; _42 = m._42; _43 = m._43; _44 = m._44;
 		return *this;
 	}
 
@@ -1365,12 +1509,18 @@ struct MATRIX
 
 	inline bool operator == (const MATRIX& m) const
 	{
-		return ev == m.ev;
+		return _11 == m._11 && _12 == m._12 && _13 == m._13 && _14 == m._14
+			&& _21 == m._21 && _22 == m._22 && _23 == m._23 && _24 == m._24
+			&& _31 == m._31 && _32 == m._32 && _33 == m._33 && _34 == m._34
+			&& _41 == m._41 && _42 == m._42 && _43 == m._43 && _44 == m._44;
 	}
 
 	inline bool operator != (const MATRIX& m) const
 	{
-		return ev != m.ev;
+		return _11 != m._11 || _12 != m._12 || _13 != m._13 || _14 != m._14
+			|| _21 != m._21 || _22 != m._22 || _23 != m._23 || _24 != m._24
+			|| _31 != m._31 || _32 != m._32 || _33 != m._33 || _34 != m._34
+			|| _41 != m._41 || _42 != m._42 || _43 != m._43 || _44 != m._44;
 	}
 
 	inline float& operator () (uint row, uint col)
@@ -1385,21 +1535,130 @@ struct MATRIX
 		return array[row][col];
 	}
 
-	inline MATRIX inverse() const
+	inline float& operator [] (int index)
 	{
-		return MATRIX(ev.inverse());
+		assert(in_range(index, 0, 15));
+		return array2[index];
 	}
 
-	inline void inverse_me()
+	inline float operator [] (int index) const
 	{
-		ev = ev.inverse();
+		assert(in_range(index, 0, 15));
+		return array2[index];
 	}
 
-	inline VEC3 transform_coord(const VEC3& v) const
+	inline MATRIX operator * (const MATRIX m) const
 	{
-		auto result = ev * VEC4::Type(v.x, v.y, v.z, 1.f);
-		float w = result.w();
-		return VEC3(result.x() / w, result.y() / w, result.z() / w);
+		MATRIX result;
+		MultiplyMatrix(result.xm, xm, m.xm);
+		return result;
+	}
+
+	inline void operator *= (const MATRIX& m)
+	{
+		MATRIX result;
+		MultiplyMatrix(result.xm, xm, m.xm);
+		*this = result;
+	}
+
+	// !! ta funkcja zak³ada okreœlon¹ kolejnoœæ wykonywania obrotów (chyba YXZ), w blenderze domyœlnie jest XYZ ale mo¿na zmieniæ
+	// nie u¿ywaæ w nowym kodzie
+	inline float GetYaw() const
+	{
+		if(_21 > 0.998f || _21 < -0.998f)
+			return atan2(_13, _33);
+		else
+			return atan2(-_31, _11);
+	}
+
+	inline void Identity()
+	{
+		_11 = 1; _12 = 0; _13 = 0; _14 = 0;
+		_21 = 0; _22 = 1; _23 = 0; _24 = 0;
+		_31 = 0; _32 = 0; _33 = 1; _34 = 0;
+		_41 = 0; _42 = 0; _43 = 0; _44 = 1;
+	}
+
+	inline MATRIX Inverse() const
+	{
+		MATRIX m;
+		InvertMatrix(*this, m, nullptr);
+		return m;
+	}
+
+	inline void Inversed()
+	{
+		MATRIX m;
+		InvertMatrix(*this, m, nullptr);
+		*this = m;
+	}
+
+	inline VEC3 TransformCoord(const VEC3& v) const
+	{
+		VEC4 v4 = v.ToVEC4();
+		VEC4 result;
+		MultiplyMatrix(result.xm, xm, v4.xm);
+		return VEC3(result.x / result.w, result.y / result.w, result.z / result.w);
+	}
+
+	inline static MATRIX Rotation(const QUAT& q);
+
+	inline static MATRIX RotationY(float a)
+	{
+		MATRIX m;
+		m.Identity();
+		float s = sin(a);
+		float c = cos(a);
+		m(0,0) = c;
+		m(2,2) = c;
+		m(0,2) = -s;
+		m(2,0) = s;
+		return m;
+	}
+
+	inline static MATRIX Scaling(float f)
+	{
+		MATRIX m;
+		m.Identity();
+		m._11 = f;
+		m._22 = f;
+		m._33 = f;
+		return m;
+	}
+
+	inline static MATRIX Scaling(float x, float y, float z)
+	{
+		return Scaling(VEC3(x, y, z));
+	}
+
+	inline static MATRIX Scaling(const VEC3& v)
+	{
+		MATRIX m;
+		m.Identity();
+		m._11 = v.x;
+		m._22 = v.y;
+		m._33 = v.z;
+		return m;
+	}
+
+	static MATRIX Transformation(const VEC3* scaling_center, const QUAT* scaling_rotation, const VEC3* scaling, const VEC3* rotation_center,
+		const QUAT* rotation, const VEC3* translation);
+	static MATRIX Transformation2D(const VEC2* scaling_center, float scaling_rotation, const VEC2* scaling, const VEC2* rotation_center, float rotation,
+		const VEC2* translation);
+
+	inline static MATRIX Translation(const VEC3& v)
+	{
+		MATRIX m;
+		m.Identity();
+		m(3, 0) = v.x;
+		m(3, 1) = v.y;
+		m(3, 2) = v.z;
+		return m;
+	}
+
+	inline static MATRIX Translation(float x, float y, float z)
+	{
+		return Translation(VEC3(x, y, z));
 	}
 };
 
@@ -1424,15 +1683,8 @@ struct OOB
 	VEC3 e; // po³owa rozmiaru
 };
 
-//-----------------------------------------------------------------------------
-// Inline functions that required forward declaration
-inline INT2::INT2(const VEC2& v) : x(int(v.x)), y(int(v.y)) {}
-inline INT2::INT2(const VEC3& v) : x(int(v.x)), y(int(v.z)) {}
-
 struct PLANE
 {
-	typedef Eigen::Hyperplane<float, 3> Type;
-
 	union
 	{
 		struct
@@ -1442,38 +1694,109 @@ struct PLANE
 			float c;
 			float d;
 		};
-		Type ev;
 	};
 
 	inline PLANE() {}
 	inline PLANE(float a, float b, float c, float d) : a(a), b(b), c(c), d(d) {}
-	inline PLANE(const PLANE& p) : ev(p.ev) {}
-	inline explicit PLANE(const Type& ev) : ev(ev) {}
+	inline PLANE(const PLANE& p) : a(p.a), b(p.b), c(p.c), d(p.d) {}
 	inline ~PLANE() {}
 
 	inline PLANE& operator = (const PLANE& p)
 	{
-		ev = p.ev;
+		a = p.a;
+		b = p.b;
+		c = p.c;
+		d = p.d;
 		return *this;
 	}
 
-	inline float dot(const VEC3& v) const
+	inline float Dot(const VEC3& v) const
 	{
 		return a*v.x + b*v.y + c*v.z + d;
 	}
 
-	inline float dot(const VEC4& v) const
+	inline float Dot(const VEC4& v) const
 	{
 		return a*v.x + b*v.y + c*v.z + d*v.w;
 	}
 
-	inline void normalize_me()
+	inline void Normalized()
 	{
-		ev.normalize();
+		float norm = sqrt(a*a + b*b + c*c);
+		if(norm)
+		{
+			a /= norm;
+			b /= norm;
+			c /= norm;
+			d /= norm;
+		}
+		else
+		{
+			a = 0;
+			b = 0;
+			c = 0;
+			d = 0;
+		}
 	}
 };
 
-static_assert(sizeof(PLANE) == sizeof(float) * 4, "PLANE size mismatch.");
+//-----------------------------------------------------------------------------
+// Quaternion
+struct QUAT
+{
+	union
+	{
+		struct
+		{
+			float x;
+			float y;
+			float z;
+			float w;
+		};
+	};
+
+	inline QUAT() {}
+	inline QUAT(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
+	inline QUAT(const QUAT& q) : x(q.x), y(q.y), z(q.z), w(q.z) {}
+
+	inline float Dot(const QUAT& q) const
+	{
+		return x*q.x + y*q.y + z*q.z + w*q.w;
+	}
+
+	inline void Identity()
+	{
+		x = 0;
+		y = 0;
+		z = 0;
+		w = 1;
+	}
+
+	inline static QUAT Slerp(const QUAT& q1, const QUAT& q2, float t)
+	{
+		float temp = 1.0f - t;
+		float dot = q1.Dot(q2);
+		if(dot < 0.0f)
+		{
+			t = -t;
+			dot = -dot;
+		}
+
+		if(1.0f - dot > 0.001f)
+		{
+			float theta = acosf(dot);
+			temp = sinf(theta * temp) / sinf(theta);
+			t = sinf(theta * t) / sinf(theta);
+		}
+
+		return QUAT(
+			temp * q1.x + t * q2.x,
+			temp * q1.y + t * q2.y,
+			temp * q1.z + t * q2.z,
+			temp * q1.w + t * q2.w
+		);
+	}
+};
 
 //-----------------------------------------------------------------------------
 // KOLIZJE
@@ -1633,4 +1956,29 @@ inline void ColorToVec(DWORD c, VEC4& v)
 	v.y = float((c & 0xFF00) >> 8) / 255;
 	v.z = float(c & 0xFF) / 255;
 	v.w = float((c & 0xFF000000) >> 24) / 255;
+}
+
+//-----------------------------------------------------------------------------
+// Inline functions that required forward declaration
+inline INT2::INT2(const VEC2& v) : x(int(v.x)), y(int(v.y)) {}
+inline INT2::INT2(const VEC3& v) : x(int(v.x)), y(int(v.z)) {}
+inline VEC4 VEC3::ToVEC4(float w) const
+{
+	return VEC4(x, y, z, w);
+}
+
+inline MATRIX MATRIX::Rotation(const QUAT& q)
+{
+	MATRIX m;
+	m.Identity();
+	m(0, 0) = 1.0f - 2.0f * (q.y * q.y + q.z * q.z);
+	m(0, 1) = 2.0f * (q.x *q.y + q.z * q.w);
+	m(0, 2) = 2.0f * (q.x * q.z - q.y * q.w);
+	m(1, 0) = 2.0f * (q.x * q.y - q.z * q.w);
+	m(1, 1) = 1.0f - 2.0f * (q.x * q.x + q.z * q.z);
+	m(1, 2) = 2.0f * (q.y *q.z + q.x *q.w);
+	m(2, 0) = 2.0f * (q.x * q.z + q.y * q.w);
+	m(2, 1) = 2.0f * (q.y *q.z - q.x *q.w);
+	m(2, 2) = 1.0f - 2.0f * (q.x * q.x + q.y * q.y);
+	return m;
 }

@@ -6,5 +6,4 @@
 #include <cstdio>
 #undef FAR
 #include <zlib.h>
-
 #include "Core/Undefine.h"

@@ -46,7 +46,7 @@ void Perlin::Change(int _size, int _octaves, float _freq, float _amp)
 		//g1[i] = (float)((rand2() % (B + B)) - B) / B;
 		g2[i].x = (float)((rand2() % (B + B)) - B) / B;
 		g2[i].y = (float)((rand2() % (B + B)) - B) / B;
-		g2[i].normalize_me();
+		g2[i].Normalized();
 		//for (j = 0 ; j < 3 ; j++)
 		//	g3[i][j] = (float)((rand2() % (B + B)) - B) / B;
 		//normalize3(g3[i]);
