@@ -18,7 +18,7 @@ struct Profiler::Entry
 	void Delete();
 };
 
-Profiler g_profiler;
+Profiler Profiler::g_profiler;
 static ObjectPool<Profiler::Entry> entry_pool;
 
 Profiler::Profiler() : started(false), enabled(false), e(nullptr), prev_e(nullptr)
@@ -166,9 +166,9 @@ void Profiler::Entry::Delete()
 ProfilerBlock::ProfilerBlock(cstring name)
 {
 	assert(name);
-	if(g_profiler.IsStarted())
+	if(Profiler::g_profiler.IsStarted())
 	{
-		g_profiler.Push(name);
+		Profiler::g_profiler.Push(name);
 		on = true;
 	}
 	else
@@ -178,5 +178,5 @@ ProfilerBlock::ProfilerBlock(cstring name)
 ProfilerBlock::~ProfilerBlock()
 {
 	if(on)
-		g_profiler.Pop();
+		Profiler::g_profiler.Pop();
 }

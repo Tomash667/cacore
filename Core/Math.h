@@ -104,6 +104,7 @@ inline float random()
 template<typename T>
 inline T random(T a)
 {
+	static_assert(std::is_integral<T>::value, "Must be integer.");
 	assert(a >= 0);
 	return rand2(a + 1);
 }
@@ -297,45 +298,6 @@ struct VEC4;
 struct MATRIX;
 struct PLANE;
 struct QUAT;
-
-template<uint ROWS, uint COLS>
-struct XMatrix
-{
-	float array[ROWS][COLS];
-
-	inline void Zero()
-	{
-		memset(array, 0, sizeof(array));
-	}
-
-	inline float& operator () (uint row, uint col)
-	{
-		return array[row][col];
-	}
-
-	inline float operator () (uint row, uint col) const
-	{
-		return array[row][col];
-	}
-};
-
-template<uint ROWS, uint INTERNAL, uint COLS>
-void MultiplyMatrix(XMatrix<ROWS, COLS>& result,
-	const XMatrix<ROWS, INTERNAL>& lhs,
-	const XMatrix<INTERNAL, COLS>& rhs)
-{
-	result.Zero();
-
-	// p. 150 Numerical Analysis (second ed.)
-	// if A is m x p, and B is p x n, then AB is m x n
-	// (AB)ij  =  [k = 1 to p] (a)ik (b)kj     (where:  1 <= i <= m, 1 <= j <= n)
-	for(uint i = 0; i < ROWS; ++i)           // 1 <= i <= m
-		for(uint j = 0; j < COLS; ++j)           // 1 <= j <= n
-			for(uint k = 0; k < INTERNAL; ++k)       // [k = 1 to p]
-				result(i, j) += lhs(i, k) * rhs(k, j);
-}
-
-bool InvertMatrix(const MATRIX& m, MATRIX& inv, float* det_out);
 
 //-----------------------------------------------------------------------------
 // Punkt na liczbach ca³kowitych
@@ -566,7 +528,6 @@ struct VEC2
 			float y;
 		};
 		float array[2];
-		XMatrix<2, 1> xm;
 	};
 
 	inline VEC2() {}
@@ -635,6 +596,11 @@ struct VEC2
 	inline VEC2 operator * (float f) const
 	{
 		return VEC2(x * f, y * f);
+	}
+
+	friend inline VEC2 operator * (float f, const VEC2& v)
+	{
+		return v.operator *(f);
 	}
 
 	inline VEC2 operator / (float f) const
@@ -825,7 +791,6 @@ struct VEC3
 			float z;
 		};
 		float array[3];
-		XMatrix<3, 1> xm;
 	};
 
 	inline VEC3() {}
@@ -895,6 +860,11 @@ struct VEC3
 	inline VEC3 operator * (float f) const
 	{
 		return VEC3(x * f, y * f, z * f);
+	}
+
+	friend inline VEC3 operator * (float f, const VEC3& v)
+	{
+		return v.operator *(f);
 	}
 
 	inline VEC3 operator / (float f) const
@@ -1104,7 +1074,6 @@ struct VEC4
 			float w;
 		};
 		float array[4];
-		XMatrix<4, 1> xm;
 	};
 
 	inline VEC4() {}
@@ -1176,6 +1145,11 @@ struct VEC4
 	inline VEC4 operator * (float f) const
 	{
 		return VEC4(x * f, y * f, z * f, w * f);
+	}
+
+	friend inline VEC4 operator * (float f, const VEC4& v)
+	{
+		return v.operator *(f);
 	}
 
 	inline VEC4 operator / (float f) const
@@ -1483,7 +1457,6 @@ struct MATRIX
 		};
 		float array[4][4];
 		float array2[16];
-		XMatrix<4, 4> xm;
 	};
 
 	inline MATRIX() {}
@@ -1550,14 +1523,14 @@ struct MATRIX
 	inline MATRIX operator * (const MATRIX m) const
 	{
 		MATRIX result;
-		MultiplyMatrix(result.xm, xm, m.xm);
+		Multiply(result, *this, m);
 		return result;
 	}
 
 	inline void operator *= (const MATRIX& m)
 	{
 		MATRIX result;
-		MultiplyMatrix(result.xm, xm, m.xm);
+		Multiply(result, *this, m);
 		*this = result;
 	}
 
@@ -1582,27 +1555,48 @@ struct MATRIX
 	inline MATRIX Inverse() const
 	{
 		MATRIX m;
-		InvertMatrix(*this, m, nullptr);
+		Inverse(m, *this, nullptr);
 		return m;
 	}
 
 	inline void Inversed()
 	{
 		MATRIX m;
-		InvertMatrix(*this, m, nullptr);
+		Inverse(m, *this, nullptr);
 		*this = m;
 	}
 
-	inline VEC3 TransformCoord(const VEC3& v) const
+	VEC4 Transform(const VEC3& v) const;
+	VEC2 TransformCoord(const VEC2& v) const;
+	VEC3 TransformCoord(const VEC3& v) const;
+	VEC3 TransformNormal(const VEC3& v) const;
+	
+	static bool Inverse(MATRIX& out, const MATRIX& m, float* determinant);
+	static MATRIX LookAt(const VEC3& eye, const VEC3& at, const VEC3& up);
+	static void Multiply(MATRIX& out, const MATRIX& m1, const MATRIX& m2);
+	static MATRIX PerspectiveFov(float fovy, float aspect, float z_near, float z_far);
+	inline static MATRIX Rotation(const QUAT& q);
+	static MATRIX Rotation(float yaw, float pitch, float roll);
+	inline static MATRIX Rotation(const VEC3& rot)
 	{
-		VEC4 v4 = v.ToVEC4();
-		VEC4 result;
-		MultiplyMatrix(result.xm, xm, v4.xm);
-		return VEC3(result.x / result.w, result.y / result.w, result.z / result.w);
+		return Rotation(rot.y, rot.x, rot.z);
 	}
 
-	inline static MATRIX Rotation(const QUAT& q);
+	// D3DXMatrixRotationX (WINE)
+	inline static MATRIX RotationX(float a)
+	{
+		MATRIX m;
+		m.Identity();
+		float s = sinf(a);
+		float c = cosf(a);
+		m(1,1) = c;
+		m(2,2) = c;
+		m(1, 2) = s;
+		m(2,1) = -s;
+		return m;
+	}
 
+	// D3DXMatrixRotationY (WINE)
 	inline static MATRIX RotationY(float a)
 	{
 		MATRIX m;
@@ -1613,6 +1607,20 @@ struct MATRIX
 		m(2,2) = c;
 		m(0,2) = -s;
 		m(2,0) = s;
+		return m;
+	}
+
+	// D3DXMatrixRotationZ (WINE)
+	inline static MATRIX RotationZ(float a)
+	{
+		MATRIX m;
+		m.Identity();
+		float s = sinf(a);
+		float c = cosf(a);
+		m(0,0) = c;
+		m(1,1) = c;
+		m(0,1) = s;
+		m(1,0) = -s;
 		return m;
 	}
 
@@ -1771,6 +1779,8 @@ struct QUAT
 		z = 0;
 		w = 1;
 	}
+
+	static QUAT FromMatrix(const MATRIX& m);
 
 	inline static QUAT Slerp(const QUAT& q1, const QUAT& q2, float t)
 	{

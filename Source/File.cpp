@@ -84,6 +84,14 @@ bool core::io::FindFiles(cstring pattern, const std::function<bool(const WIN32_F
 }
 
 //=================================================================================================
+void core::io::Execute(cstring file)
+{
+	assert(file);
+
+	ShellExecute(nullptr, "open", file, nullptr, nullptr, SW_SHOWNORMAL);
+}
+
+//=================================================================================================
 bool LoadFileToString(cstring path, string& str)
 {
 	HANDLE file = CreateFile(path, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);

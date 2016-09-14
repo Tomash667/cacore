@@ -1,1 +1,4 @@
 + custom file io hiding Windows.h
++ http://stackoverflow.com/questions/1894446/taking-advantage-of-sse-and-other-cpu-extensions
++ https://rosettacode.org/wiki/Category:Programming_Tasks
++ TransformCoord for VEC3(0,0,0) optimalization

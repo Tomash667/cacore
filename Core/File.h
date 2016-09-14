@@ -14,6 +14,8 @@ namespace core
 		bool FileExists(cstring filename);
 		// Find files matching pattern, return false from func to stop.
 		bool FindFiles(cstring pattern, const std::function<bool(const WIN32_FIND_DATA&)>& func, bool exclude_special = true);
+		// Call ShellExecute on file
+		void Execute(cstring file);
 	}
 }
 

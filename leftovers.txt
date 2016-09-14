@@ -1,61 +1,4 @@
 //-----------------------------------------------------------------------------
-// dodatkowe funkcje matematyczne directx
-// można zrobić to używając innych ale tak jest krócej
-//-----------------------------------------------------------------------------
-inline MATRIX* D3DXMatrixTranslation(MATRIX* mat, const VEC3& pos)
-{
-	return D3DXMatrixTranslation(mat, pos.x, pos.y, pos.z);
-}
-
-inline MATRIX* D3DXMatrixScaling(MATRIX* mat, const VEC3& scale)
-{
-	return D3DXMatrixScaling(mat, scale.x, scale.y, scale.z);
-}
-
-inline MATRIX* D3DXMatrixScaling(MATRIX* mat, float scale)
-{
-	return D3DXMatrixScaling(mat, scale, scale, scale);
-}
-
-inline MATRIX* D3DXMatrixRotation(MATRIX* mat, const VEC3& rot)
-{
-	return D3DXMatrixRotationYawPitchRoll(mat, rot.y, rot.x, rot.z);
-}
-
-inline void D3DXVec2Normalize(VEC2& v)
-{
-	D3DXVec2Normalize(&v, &v);
-}
-
-inline void D3DXVec3Normalize(VEC3* v)
-{
-	D3DXVec3Normalize(v, v);
-}
-
-inline VEC3* D3DXVec3Transform(VEC3* out, const VEC3* in, const MATRIX* mat)
-{
-	D3DXVECTOR4 v;
-	D3DXVec3Transform(&v, in, mat);
-	out->x = v.x;
-	out->y = v.y;
-	out->z = v.z;
-	return out;
-}
-
-inline void VEC3Multiply(VEC3& out, const VEC3& v1, const VEC3& v2)
-{
-	out.x = v1.x * v2.x;
-	out.y = v1.y * v2.y;
-	out.z = v1.z * v2.z;
-}
-
-inline void D3DXQuaternionRotation(QUAT& q, const VEC3& rot)
-{
-	D3DXQuaternionRotationYawPitchRoll(&q, rot.y, rot.x, rot.z);
-}
-
-
-//-----------------------------------------------------------------------------
 // BitStream source
 class BitStreamSource : public StreamSource
 {
@@ -129,23 +72,3 @@ StreamWriter::StreamWriter(BitStream& bitstream)
 {
 	source = StreamSourcePool::Get<BitStreamSource>(&bitstream, true);
 }
-
-//template<typename T, typename T2>
-	//inline INT2(T _x, T2 _y) : x(int(_x)), y(int(_y)) {}
-	
-	
-	
-	
-/*inline VEC2 lerp(const VEC2& v1, const VEC2& v2, float t)
-{
-	VEC2 out;
-	D3DXVec2Lerp(&out, &v1, &v2, t);
-	return out;
-}*/
-
-/*inline VEC3 lerp(const VEC3& v1, const VEC3& v2, float t)
-{
-	VEC3 out;
-	D3DXVec3Lerp(&out, &v1, &v2, t);
-	return out;
-}*/

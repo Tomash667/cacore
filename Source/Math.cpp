@@ -1171,138 +1171,91 @@ const VEC2 POISSON_DISC_2D[] = {
 };
 const int poisson_disc_count = countof(POISSON_DISC_2D);
 
-// Calculate inverted matrix, source and dest can't be same matrix
-bool InvertMatrix(const MATRIX& m, MATRIX& inv, float* det_out)
+// D3DXMatrixMultiply (WINE)
+void MATRIX::Multiply(MATRIX& out, const MATRIX& m1, const MATRIX& m2)
+{	
+	for(int i = 0; i<4; i++)
+	{
+		for(int j = 0; j<4; j++)
+		{
+			out(i,j) = m1(i,0) * m2(0,j) + m1(i,1) * m2(1,j) + m1(i,2) * m2(2,j) + m1(i,3) * m2(3,j);
+		}
+	}
+}
+
+// D3DXMatrixInverse (WINE)
+bool MATRIX::Inverse(MATRIX& out, const MATRIX& m, float* determinant)
 {
-	assert(&m != &inv);
+	FLOAT det, t[3], v[16];
+	UINT i, j;
 	
-	inv[0] = m[5] * m[10] * m[15] -
-		m[5] * m[11] * m[14] -
-		m[9] * m[6] * m[15] +
-		m[9] * m[7] * m[14] +
-		m[13] * m[6] * m[11] -
-		m[13] * m[7] * m[10];
+	t[0] = m(2,2) * m(3,3) - m(2,3) * m(3,2);
+	t[1] = m(1,2) * m(3,3) - m(1,3) * m(3,2);
+	t[2] = m(1,2) * m(2,3) - m(1,3) * m(2,2);
+	v[0] = m(1,1) * t[0] - m(2,1) * t[1] + m(3,1) * t[2];
+	v[4] = -m(1,0) * t[0] + m(2,0) * t[1] - m(3,0) * t[2];
 
-	inv[4] = -m[4] * m[10] * m[15] +
-		m[4] * m[11] * m[14] +
-		m[8] * m[6] * m[15] -
-		m[8] * m[7] * m[14] -
-		m[12] * m[6] * m[11] +
-		m[12] * m[7] * m[10];
+	t[0] = m(1,0) * m(2,1) - m(2,0) * m(1,1);
+	t[1] = m(1,0) * m(3,1) - m(3,0) * m(1,1);
+	t[2] = m(2,0) * m(3,1) - m(3,0) * m(2,1);
+	v[8] = m(3,3) * t[0] - m(2,3) * t[1] + m(1,3) * t[2];
+	v[12] = -m(3,2) * t[0] + m(2,2) * t[1] - m(1,2) * t[2];
 
-	inv[8] = m[4] * m[9] * m[15] -
-		m[4] * m[11] * m[13] -
-		m[8] * m[5] * m[15] +
-		m[8] * m[7] * m[13] +
-		m[12] * m[5] * m[11] -
-		m[12] * m[7] * m[9];
-
-	inv[12] = -m[4] * m[9] * m[14] +
-		m[4] * m[10] * m[13] +
-		m[8] * m[5] * m[14] -
-		m[8] * m[6] * m[13] -
-		m[12] * m[5] * m[10] +
-		m[12] * m[6] * m[9];	
-
-	float det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
-	if(det_out)
-		*det_out = det;
-
-	if(det == 0)
+	det = m(0,0) * v[0] + m(0,1) * v[4] +
+		m(0,2) * v[8] + m(0,3) * v[12];
+	if(det == 0.0f)
 		return false;
+	if(determinant)
+		*determinant = det;
 
-	inv[1] = -m[1] * m[10] * m[15] +
-		m[1] * m[11] * m[14] +
-		m[9] * m[2] * m[15] -
-		m[9] * m[3] * m[14] -
-		m[13] * m[2] * m[11] +
-		m[13] * m[3] * m[10];
+	t[0] = m(2,2) * m(3,3) - m(2,3) * m(3,2);
+	t[1] = m(0,2) * m(3,3) - m(0,3) * m(3,2);
+	t[2] = m(0,2) * m(2,3) - m(0,3) * m(2,2);
+	v[1] = -m(0,1) * t[0] + m(2,1) * t[1] - m(3,1) * t[2];
+	v[5] = m(0,0) * t[0] - m(2,0) * t[1] + m(3,0) * t[2];
 
-	inv[5] = m[0] * m[10] * m[15] -
-		m[0] * m[11] * m[14] -
-		m[8] * m[2] * m[15] +
-		m[8] * m[3] * m[14] +
-		m[12] * m[2] * m[11] -
-		m[12] * m[3] * m[10];
+	t[0] = m(0,0) * m(2,1) - m(2,0) * m(0,1);
+	t[1] = m(3,0) * m(0,1) - m(0,0) * m(3,1);
+	t[2] = m(2,0) * m(3,1) - m(3,0) * m(2,1);
+	v[9] = -m(3,3) * t[0] - m(2,3) * t[1] - m(0,3) * t[2];
+	v[13] = m(3,2) * t[0] + m(2,2) * t[1] + m(0,2) * t[2];
 
-	inv[9] = -m[0] * m[9] * m[15] +
-		m[0] * m[11] * m[13] +
-		m[8] * m[1] * m[15] -
-		m[8] * m[3] * m[13] -
-		m[12] * m[1] * m[11] +
-		m[12] * m[3] * m[9];
+	t[0] = m(1,2) * m(3,3) - m(1,3) * m(3,2);
+	t[1] = m(0,2) * m(3,3) - m(0,3) * m(3,2);
+	t[2] = m(0,2) * m(1,3) - m(0,3) * m(1,2);
+	v[2] = m(0,1) * t[0] - m(1,1) * t[1] + m(3,1) * t[2];
+	v[6] = -m(0,0) * t[0] + m(1,0) * t[1] - m(3,0) * t[2];
 
-	inv[13] = m[0] * m[9] * m[14] -
-		m[0] * m[10] * m[13] -
-		m[8] * m[1] * m[14] +
-		m[8] * m[2] * m[13] +
-		m[12] * m[1] * m[10] -
-		m[12] * m[2] * m[9];
+	t[0] = m(0,0) * m(1,1) - m(1,0) * m(0,1);
+	t[1] = m(3,0) * m(0,1) - m(0,0) * m(3,1);
+	t[2] = m(1,0) * m(3,1) - m(3,0) * m(1,1);
+	v[10] = m(3,3) * t[0] + m(1,3) * t[1] + m(0,3) * t[2];
+	v[14] = -m(3,2) * t[0] - m(1,2) * t[1] - m(0,2) * t[2];
 
-	inv[2] = m[1] * m[6] * m[15] -
-		m[1] * m[7] * m[14] -
-		m[5] * m[2] * m[15] +
-		m[5] * m[3] * m[14] +
-		m[13] * m[2] * m[7] -
-		m[13] * m[3] * m[6];
+	t[0] = m(1,2) * m(2,3) - m(1,3) * m(2,2);
+	t[1] = m(0,2) * m(2,3) - m(0,3) * m(2,2);
+	t[2] = m(0,2) * m(1,3) - m(0,3) * m(1,2);
+	v[3] = -m(0,1) * t[0] + m(1,1) * t[1] - m(2,1) * t[2];
+	v[7] = m(0,0) * t[0] - m(1,0) * t[1] + m(2,0) * t[2];
 
-	inv[6] = -m[0] * m[6] * m[15] +
-		m[0] * m[7] * m[14] +
-		m[4] * m[2] * m[15] -
-		m[4] * m[3] * m[14] -
-		m[12] * m[2] * m[7] +
-		m[12] * m[3] * m[6];
+	v[11] = -m(0,0) * (m(1,1) * m(2,3) - m(1,3) * m(2,1)) +
+		m(1,0) * (m(0,1) * m(2,3) - m(0,3) * m(2,1)) -
+		m(2,0) * (m(0,1) * m(1,3) - m(0,3) * m(1,1));
 
-	inv[10] = m[0] * m[5] * m[15] -
-		m[0] * m[7] * m[13] -
-		m[4] * m[1] * m[15] +
-		m[4] * m[3] * m[13] +
-		m[12] * m[1] * m[7] -
-		m[12] * m[3] * m[5];
-
-	inv[14] = -m[0] * m[5] * m[14] +
-		m[0] * m[6] * m[13] +
-		m[4] * m[1] * m[14] -
-		m[4] * m[2] * m[13] -
-		m[12] * m[1] * m[6] +
-		m[12] * m[2] * m[5];
-
-	inv[3] = -m[1] * m[6] * m[11] +
-		m[1] * m[7] * m[10] +
-		m[5] * m[2] * m[11] -
-		m[5] * m[3] * m[10] -
-		m[9] * m[2] * m[7] +
-		m[9] * m[3] * m[6];
-
-	inv[7] = m[0] * m[6] * m[11] -
-		m[0] * m[7] * m[10] -
-		m[4] * m[2] * m[11] +
-		m[4] * m[3] * m[10] +
-		m[8] * m[2] * m[7] -
-		m[8] * m[3] * m[6];
-
-	inv[11] = -m[0] * m[5] * m[11] +
-		m[0] * m[7] * m[9] +
-		m[4] * m[1] * m[11] -
-		m[4] * m[3] * m[9] -
-		m[8] * m[1] * m[7] +
-		m[8] * m[3] * m[5];
-
-	inv[15] = m[0] * m[5] * m[10] -
-		m[0] * m[6] * m[9] -
-		m[4] * m[1] * m[10] +
-		m[4] * m[2] * m[9] +
-		m[8] * m[1] * m[6] -
-		m[8] * m[2] * m[5];
+	v[15] = m(0,0) * (m(1,1) * m(2,2) - m(1,2) * m(2,1)) -
+		m(1,0) * (m(0,1) * m(2,2) - m(0,2) * m(2,1)) +
+		m(2,0) * (m(0,1) * m(1,2) - m(0,2) * m(1,1));
 
 	det = 1.0f / det;
 
-	for(int i = 0; i < 16; i++)
-		inv[i] *= det;
+	for(i = 0; i < 4; i++)
+		for(j = 0; j < 4; j++)
+			out(i,j) = v[4 * i + j] * det;
 
 	return true;
 }
 
+// D3DXMatrixTransformation2D (WINE)
 MATRIX MATRIX::Transformation2D(const VEC2* scaling_center, float scaling_rotation, const VEC2* scaling, const VEC2* rotation_center, float rotation,
 	const VEC2* translation)
 {
@@ -1374,6 +1327,7 @@ MATRIX MATRIX::Transformation2D(const VEC2* scaling_center, float scaling_rotati
 	return Transformation(&sca_center, &sca_rot, &sca, &rot_center, &rot, &trans);
 }
 
+// D3DXMatrixTransformation (WINE)
 MATRIX MATRIX::Transformation(const VEC3* scaling_center, const QUAT* scaling_rotation, const VEC3* scaling, const VEC3* rotation_center,
 	const QUAT* rotation, const VEC3* translation)
 {
@@ -1443,4 +1397,191 @@ MATRIX MATRIX::Transformation(const VEC3* scaling_center, const QUAT* scaling_ro
 		m *= Rotation(*rotation);
 	m *= Translation(prc.x + pt.x, prc.y + pt.y, prc.z + pt.z);
 	return m;
+}
+
+// D3DXMatrixRotationYawPitchRoll (WINE)
+MATRIX MATRIX::Rotation(float yaw, float pitch, float roll)
+{
+	float sroll, croll, spitch, cpitch, syaw, cyaw;
+	sroll = sinf(roll);
+	croll = cosf(roll);
+	spitch = sinf(pitch);
+	cpitch = cosf(pitch);
+	syaw = sinf(yaw);
+	cyaw = cosf(yaw);
+
+	MATRIX m;
+	m(0,0) = sroll * spitch * syaw + croll * cyaw;
+	m(0,1) = sroll * cpitch;
+	m(0,2) = sroll * spitch * cyaw - croll * syaw;
+	m(0,3) = 0.0f;
+	m(1,0) = croll * spitch * syaw - sroll * cyaw;
+	m(1,1) = croll * cpitch;
+	m(1,2) = croll * spitch * cyaw + sroll * syaw;
+	m(1,3) = 0.0f;
+	m(2,0) = cpitch * syaw;
+	m(2,1) = -spitch;
+	m(2,2) = cpitch * cyaw;
+	m(2,3) = 0.0f;
+	m(3,0) = 0.0f;
+	m(3,1) = 0.0f;
+	m(3,2) = 0.0f;
+	m(3,3) = 1.0f;
+	return m;
+}
+
+// D3DXMatrixLookAtLH (WINE)
+MATRIX MATRIX::LookAt(const VEC3& eye, const VEC3& at, const VEC3& up)
+{
+	VEC3 right, upn, vec;
+	
+	vec = at - eye;
+	vec.Normalized();
+	right = up.Cross(vec);
+	upn = vec.Cross(right);
+	right.Normalized();
+	upn.Normalized();
+
+	MATRIX m;
+	m(0,0) = right.x;
+	m(1,0) = right.y;
+	m(2,0) = right.z;
+	m(3,0) = -right.Dot(eye);
+	m(0,1) = upn.x;
+	m(1,1) = upn.y;
+	m(2,1) = upn.z;
+	m(3,1) = -upn.Dot(eye);
+	m(0,2) = vec.x;
+	m(1,2) = vec.y;
+	m(2,2) = vec.z;
+	m(3,2) = -vec.Dot(eye);
+	m(0,3) = 0.0f;
+	m(1,3) = 0.0f;
+	m(2,3) = 0.0f;
+	m(3,3) = 1.0f;
+	return m;
+}
+
+// D3DXMatrixPerspectiveFovLH (WINE)
+MATRIX MATRIX::PerspectiveFov(float fovy, float aspect, float z_near, float z_far)
+{
+	MATRIX m;
+	m.Identity();
+	m(0,0) = 1.0f / (aspect * tanf(fovy / 2.0f));
+	m(1,1) = 1.0f / tanf(fovy / 2.0f);
+	m(2,2) = z_far / (z_far - z_near);
+	m(2,3) = 1.0f;
+	m(3,2) = (z_far * z_near) / (z_near - z_far);
+	m(3,3) = 0.0f;
+	return m;
+}
+
+// D3DXQuaternionRotationMatrix (WINE)
+QUAT QUAT::FromMatrix(const MATRIX& m)
+{
+	float s, trace;
+	QUAT q;
+	
+	trace = m(0,0) + m(1,1) + m(2,2) + 1.0f;
+	if(trace > 1.0f)
+	{
+		s = 2.0f * sqrtf(trace);
+		q.x = (m(1,2) - m(2,1)) / s;
+		q.y = (m(2,0) - m(0,2)) / s;
+		q.z = (m(0,1) - m(1,0)) / s;
+		q.w = 0.25f * s;
+	}
+	else
+	{
+		int i, maxi = 0;
+
+		for(i = 1; i < 3; i++)
+		{
+			if(m(i,i) > m(maxi,maxi))
+				maxi = i;
+		}
+
+		switch(maxi)
+		{
+		case 0:
+			s = 2.0f * sqrtf(1.0f + m(0,0) - m(1,1) - m(2,2));
+			q.x = 0.25f * s;
+			q.y = (m(0,1) + m(1,0)) / s;
+			q.z = (m(0,2) + m(2,0)) / s;
+			q.w = (m(1,2) - m(2,1)) / s;
+			break;
+
+		case 1:
+			s = 2.0f * sqrtf(1.0f + m(1,1) - m(0,0) - m(2,2));
+			q.x = (m(0,1) + m(1,0)) / s;
+			q.y = 0.25f * s;
+			q.z = (m(1,2) + m(2,1)) / s;
+			q.w = (m(2,0) - m(0,2)) / s;
+			break;
+
+		case 2:
+			s = 2.0f * sqrtf(1.0f + m(2,2) - m(0,0) - m(1,1));
+			q.x = (m(0,2) + m(2,0)) / s;
+			q.y = (m(1,2) + m(2,1)) / s;
+			q.z = 0.25f * s;
+			q.w = (m(0,1) - m(1,0)) / s;
+			break;
+		}
+	}
+
+	return q;
+}
+
+// D3DXVec2TransformCoord (WINE)
+VEC2 MATRIX::TransformCoord(const VEC2& v) const
+{
+	VEC2 out = v;
+	const MATRIX& m = *this;
+	float norm = m(0,3) * v.x + m(1,3) * v.y + m(3,3);
+
+	out.x = (m(0,0) * v.x + m(1,0) * v.y + m(3,0)) / norm;
+	out.y = (m(0,1) * v.x + m(1,1) * v.y + m(3,1)) / norm;
+
+	return out;
+}
+
+// D3DXVec3Transform (WINE)
+VEC4 MATRIX::Transform(const VEC3& v) const
+{
+	VEC4 out;
+	const MATRIX& m = *this;
+	
+	out.x = m(0,0) * v.x + m(1,0) * v.y + m(2,0) * v.z + m(3,0);
+	out.y = m(0,1) * v.x + m(1,1) * v.y + m(2,1) * v.z + m(3,1);
+	out.z = m(0,2) * v.x + m(1,2) * v.y + m(2,2) * v.z + m(3,2);
+	out.w = m(0,3) * v.x + m(1,3) * v.y + m(2,3) * v.z + m(3,3);
+
+	return out;
+}
+
+// D3DXVec3TransformCoord (WINE)
+VEC3 MATRIX::TransformCoord(const VEC3& v) const
+{
+	VEC3 out = v;
+	const MATRIX& m = *this;
+	float norm = m(0,3) * v.x + m(1,3) * v.y + m(2,3) * v.z + m(3,3);
+
+	out.x = (m(0,0) * v.x + m(1,0) * v.y + m(2,0) * v.z + m(3,0)) / norm;
+	out.y = (m(0,1) * v.x + m(1,1) * v.y + m(2,1) * v.z + m(3,1)) / norm;
+	out.z = (m(0,2) * v.x + m(1,2) * v.y + m(2,2) * v.z + m(3,2)) / norm;
+
+	return out;
+}
+
+// D3DXVec3TransformNormal (WINE)
+VEC3 MATRIX::TransformNormal(const VEC3& v) const
+{
+	VEC3 out = v;
+	const MATRIX& m = *this;
+
+	out.x = m(0,0) * v.x + m(1,0) * v.y + m(2,0) * v.z;
+	out.y = m(0,1) * v.x + m(1,1) * v.y + m(2,1) * v.z;
+	out.z = m(0,2) * v.x + m(1,2) * v.y + m(2,2) * v.z;
+
+	return out;
 }
