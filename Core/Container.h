@@ -266,7 +266,7 @@ struct ObjectPool
 {
 	~ObjectPool()
 	{
-		DeleteElements(pool);
+		Cleanup();
 	}
 
 	inline T* Get()
@@ -286,9 +286,30 @@ struct ObjectPool
 		return t;
 	}
 
+	inline void VerifyElement(T* t)
+	{
+		for(T* e : pool)
+			assert(t != e);
+	}
+
+	inline void CheckDuplicates(vector<T*>& elems)
+	{
+		for(uint i = 0, count = elems.size(); i < count; ++i)
+		{
+			T* t = elems[i];
+			if(!t)
+				continue;
+			for(uint j = i + 1; j < count; ++j)
+				assert(t != elems[j]);
+		}
+	}
+
 	inline void Free(T* t)
 	{
 		assert(t);
+#ifdef _DEBUG
+		VerifyElement(t);
+#endif
 		__if_exists(T::OnFree)
 		{
 			t->OnFree();
@@ -318,8 +339,12 @@ struct ObjectPool
 		DeleteElementsChecked(elems);
 #else
 #ifdef _DEBUG
+		CheckDuplicates(elems);
 		for(T* e : elems)
+		{
 			assert(e);
+			VerifyElement(e);
+		}
 #endif
 		pool.insert(pool.end(), elems.begin(), elems.end());
 		elems.clear();
@@ -328,10 +353,16 @@ struct ObjectPool
 
 	inline void SafeFree(vector<T*>& elems)
 	{
+#ifdef _DEBUG
+		CheckDuplicates(elems);
+#endif
 		for(T* e : elems)
 		{
 			if(e)
 			{
+#ifdef _DEBUG
+				VerifyElement(e);
+#endif
 				__if_exists(T::OnFree)
 				{
 					e->OnFree();
@@ -346,6 +377,11 @@ struct ObjectPool
 		elems.clear();
 	}
 
+	inline void Cleanup()
+	{
+		DeleteElements(pool);
+	}
+
 private:
 	vector<T*> pool;
 };
@@ -358,6 +394,7 @@ public:
 	static inline void Free(T* t) { GetPool().Free(t); }
 	static inline void Free(vector<T*>& ts) { GetPool().Free(ts); }
 	static inline void SafeFree(vector <T*>& ts) { GetPool().SafeFree(ts); }
+	static inline void Cleanup() { GetPool().Cleanup(); }
 	inline virtual void Free() { Free((T*)this); }
 
 private:

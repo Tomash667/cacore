@@ -224,10 +224,14 @@ namespace tokenizer
 			F_FILE_INFO = 1 << 5, // add filename in errors
 		};
 
-		explicit Tokenizer(int _flags = F_UNESCAPE) : need_sorting(false), formatter(this)
+		explicit Tokenizer(int _flags = F_UNESCAPE) : need_sorting(false), formatter(this), seek(nullptr)
 		{
 			SetFlags(_flags);
 			Reset();
+		}
+		inline ~Tokenizer()
+		{
+			delete seek;
 		}
 
 		void FromString(cstring _str);
