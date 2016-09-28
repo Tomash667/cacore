@@ -290,6 +290,14 @@ inline int roundi(float value)
 	return (int)round(value);
 }
 
+inline int modulo(int a, int mod)
+{
+	if(a >= 0)
+		return a % mod;
+	else
+		return a + mod * ((-a / mod) + 1);
+}
+
 //-----------------------------------------------------------------------------
 struct INT2;
 struct VEC2;
@@ -435,6 +443,8 @@ struct INT2
 	{
 		return ::random(x, y);
 	}
+
+	inline VEC2 ToVEC2() const;
 };
 
 inline INT2 random(const INT2& a, const INT2& b)
@@ -513,6 +523,7 @@ struct Rect
 	{
 		assert(minx <= maxx && miny <= maxy);
 	}
+	Rect(const Rect& r) : minx(r.minx), miny(r.miny), maxx(r.maxx), maxy(r.maxy) {}
 };
 
 //-----------------------------------------------------------------------------
@@ -1310,14 +1321,42 @@ struct BOX2D
 	{
 	}
 
+	inline void operator += (const VEC2& v)
+	{
+		v1 += v;
+		v2 += v;
+	}
+
+	inline void Create(const INT2& pos, const INT2& size)
+	{
+		v1.x = (float)pos.x;
+		v1.y = (float)pos.y;
+		v2.x = v1.x + (float)size.x;
+		v2.y = v1.y + (float)size.y;
+	}
+
 	inline VEC2 Midpoint() const
 	{
 		return v1 + (v2 - v1) / 2;
 	}
 
+	inline void Move(const VEC2& pos)
+	{
+		VEC2 dif = pos - v1;
+		v1 += dif;
+		v2 += dif;
+	}
+
 	inline bool IsInside(const VEC3& pos) const
 	{
 		return pos.x >= v1.x && pos.x <= v2.x && pos.z >= v1.y && pos.z <= v2.y;
+	}
+
+	inline bool IsInside(const INT2& pos) const
+	{
+		float x = (float)pos.x;
+		float y = (float)pos.y;
+		return x >= v1.x && x <= v2.x && y >= v1.y && y <= v2.y;
 	}
 
 	inline float SizeX() const { return abs(v2.x - v1.x); }
@@ -1355,6 +1394,23 @@ struct BOX2D
 		return VEC2(v1.x, v2.y);
 	}
 
+	inline VEC3 LeftTop3() const
+	{
+		return VEC3(v1.x, v1.y, 0);
+	}
+	inline VEC3 RightTop3() const
+	{
+		return VEC3(v2.x, v1.y, 0);
+	}
+	inline VEC3 LeftBottom3() const
+	{
+		return VEC3(v1.x, v2.y, 0);
+	}
+	inline VEC3 RightBottom3() const
+	{
+		return VEC3(v2.x, v2.y, 0);
+	}
+
 	inline BOX2D LeftBottomPart() const
 	{
 		return BOX2D(v1.x, v1.y, v1.x + (v2.x - v1.x) / 2, v1.y + (v2.y - v1.y) / 2);
@@ -1378,6 +1434,23 @@ struct BOX2D
 		y = v1.y + (v2.y - v1.y) / 2;
 		w = (v2.x - v1.x) / 2;
 		h = (v2.y - v1.y) / 2;
+	}
+
+	inline RECT ToRect() const
+	{
+		RECT r = { (int)v1.x, (int)v1.y, (int)v2.x, (int)v2.y };
+		return r;
+	}
+
+	inline RECT ToRect(const INT2& pad) const
+	{
+		RECT r = {
+			(int)v1.x + pad.x,
+			(int)v1.y + pad.y,
+			(int)v2.x - pad.x,
+			(int)v2.y - pad.y
+		};
+		return r;
 	}
 };
 
@@ -1972,6 +2045,10 @@ inline void ColorToVec(DWORD c, VEC4& v)
 // Inline functions that required forward declaration
 inline INT2::INT2(const VEC2& v) : x(int(v.x)), y(int(v.y)) {}
 inline INT2::INT2(const VEC3& v) : x(int(v.x)), y(int(v.z)) {}
+inline VEC2 INT2::ToVEC2() const
+{
+	return VEC2(float(x), float(y));
+}
 inline VEC4 VEC3::ToVEC4(float w) const
 {
 	return VEC4(x, y, z, w);
