@@ -761,7 +761,11 @@ namespace tokenizer
 		}
 
 		void SetFlags(int _flags);
-		inline void CheckItemOrKeyword(const string& item) { CheckItemOrKeyword(normal_seek, item); }
+		inline void CheckItemOrKeyword(const string& item)
+		{
+			CheckSorting();
+			CheckItemOrKeyword(normal_seek, item);
+		}
 		Pos GetPos();
 		void MoveTo(const Pos& pos);
 		bool MoveToClosingSymbol(char start, char end);
