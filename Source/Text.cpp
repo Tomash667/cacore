@@ -11,6 +11,7 @@ static char format_buf[FORMAT_STRINGS][FORMAT_LENGTH];
 static int format_marker;
 static string g_escp;
 string g_tmp_string;
+
 //=================================================================================================
 // Formatowanie ci¹gu znaków
 //=================================================================================================
@@ -225,8 +226,8 @@ bool Unescape(const string& str_in, uint pos, uint size, string& str_out)
 	str_out.clear();
 	str_out.reserve(str_in.length());
 
-	cstring unesc = "nt\\\"";
-	cstring esc = "\n\t\\\"";
+	cstring unesc = "nt\\\"'";
+	cstring esc = "\n\t\\\"'";
 	uint end = pos + size;
 
 	for(; pos<end; ++pos)
@@ -256,7 +257,7 @@ bool Unescape(const string& str_in, uint pos, uint size, string& str_out)
 }
 
 //=================================================================================================
-cstring Escape(cstring str)
+cstring Escape(cstring str, char quote)
 {
 	g_escp.clear();
 	cstring from = "\n\t\r";
@@ -267,7 +268,11 @@ cstring Escape(cstring str)
 	{
 		int index = strchr_index(from, c);
 		if(index == -1)
+		{
+			if(c == quote)
+				g_escp += '\\';
 			g_escp += c;
+		}
 		else
 		{
 			g_escp += '\\';
@@ -277,6 +282,13 @@ cstring Escape(cstring str)
 	}
 
 	return g_escp.c_str();
+}
+
+//=================================================================================================
+cstring EscapeChar(char c)
+{
+	g_tmp_string = c;
+	return Escape(g_tmp_string.c_str(), '\'');
 }
 
 //=================================================================================================

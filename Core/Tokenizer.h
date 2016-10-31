@@ -13,6 +13,7 @@ namespace tokenizer
 		T_EOL,
 		T_ITEM,
 		T_STRING,
+		T_CHAR,
 		T_SYMBOL,
 		T_INT,
 		T_FLOAT,
@@ -85,8 +86,6 @@ namespace tokenizer
 
 	//-----------------------------------------------------------------------------
 	// Tokenizer
-	// todo:
-	// - 'a', ' b'
 	//-----------------------------------------------------------------------------
 	// U¿ywa g_tmp_string gdy poda siê cstring w konstruktorze
 	//-----------------------------------------------------------------------------
@@ -222,6 +221,7 @@ namespace tokenizer
 			F_MULTI_KEYWORDS = 1 << 3, // allows multiple keywords
 			F_SEEK = 1 << 4, // allows to use seek operations
 			F_FILE_INFO = 1 << 5, // add filename in errors
+			F_CHAR = 1 << 6, // handle 'c' as char type (otherwise it's symbol ', identifier c, symbol ')
 		};
 
 		explicit Tokenizer(int _flags = F_UNESCAPE) : need_sorting(false), formatter(this), seek(nullptr)
@@ -349,6 +349,8 @@ namespace tokenizer
 		inline bool IsItem() const { return IsToken(T_ITEM); }
 		inline bool IsItem(cstring _item) const { return IsItem() && GetItem() == _item; }
 		inline bool IsString() const { return IsToken(T_STRING); }
+		inline bool IsChar() const { return IsToken(T_CHAR); }
+		inline bool IsChar(char c) const { return IsChar() && GetChar() == c; }
 		inline bool IsSymbol() const { return IsToken(T_SYMBOL); }
 		inline bool IsSymbol(char c) const { return IsSymbol() && GetSymbol() == c; }
 		bool IsSymbol(cstring s, char* c = nullptr) const;
@@ -411,7 +413,18 @@ namespace tokenizer
 		inline void AssertEof() const { AssertToken(T_EOF); }
 		inline void AssertItem() const { AssertToken(T_ITEM); }
 		inline void AssertString() const { AssertToken(T_STRING); }
+		inline void AssertChar() const { AssertToken(T_CHAR); }
+		inline void AssertChar(char c) const
+		{
+			if(!IsChar(c))
+				Unexpected(T_CHAR, (int*)&c);
+		}
 		inline void AssertSymbol() const { AssertToken(T_SYMBOL); }
+		inline void AssertSymbol(char c) const
+		{
+			if(!IsSymbol(c))
+				Unexpected(T_SYMBOL, (int*)&c);
+		}
 		inline void AssertInt() const { AssertToken(T_INT); }
 		inline void AssertFloat() const { AssertToken(T_FLOAT); }
 		inline void AssertNumber() const
@@ -441,11 +454,6 @@ namespace tokenizer
 			int group = IsKeywordGroup(groups);
 			if(group == MISSING_GROUP)
 				StartUnexpected().AddList(T_KEYWORD_GROUP, groups);
-		}
-		inline void AssertSymbol(char c) const
-		{
-			if(!IsSymbol(c))
-				Unexpected(T_SYMBOL, (int*)&c);
 		}
 		inline void AssertText() const
 		{
@@ -481,6 +489,11 @@ namespace tokenizer
 		{
 			assert(IsString());
 			return normal_seek.item;
+		}
+		inline char GetChar() const
+		{
+			assert(IsChar());
+			return normal_seek._char;
 		}
 		inline char GetSymbol() const
 		{
@@ -589,6 +602,11 @@ namespace tokenizer
 			if(normal_seek.item.empty())
 				Throw("Expected not empty string.");
 			return normal_seek.item;
+		}
+		inline char MustGetChar() const
+		{
+			AssertChar();
+			return GetChar();
 		}
 		inline char MustGetSymbol() const
 		{

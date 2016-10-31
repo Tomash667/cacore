@@ -142,7 +142,7 @@ redo:
 		s.pos = FindEndOfQuote(s, pos2 + 1);
 
 		if(s.pos == string::npos || str->at(s.pos) != '"')
-			formatter.Throw(Format("Not closed \" opened at %d.", cp + 1));
+			formatter.Throw(Format("Not closed string \" opened at %u.", cp + 1));
 
 		if(IS_SET(flags, F_UNESCAPE))
 			Unescape(*str, pos2 + 1, s.pos - pos2 - 1, s.item);
@@ -220,12 +220,35 @@ redo:
 	}
 	else if(strchr(SYMBOLS, c))
 	{
-		// symbol
-		++s.charpos;
-		s.pos = pos2 + 1;
-		s.token = T_SYMBOL;
-		s._char = c;
-		s.item = c;
+		if(c == '\'' && IS_SET(flags, F_CHAR))
+		{
+			// char
+			uint cp = s.charpos;
+			s.pos = FindFirstOf(s, "'", pos2 + 1);
+
+			if(s.pos == string::npos)
+				formatter.Throw(Format("Not closed char ' opened at %u.", cp + 1));
+
+			Unescape(*str, pos2 + 1, s.pos - pos2 - 1, s.item);
+
+			if(s.item.empty())
+				formatter.Throw(Format("Empty char sequence at %u.", cp + 1));
+			if(s.item.size() > 1u)
+				formatter.Throw(Format("Broken char sequence '%s' at %u.", s.item.c_str(), cp + 1));
+
+			s.token = T_CHAR;
+			s._char = s.item[0];
+			++s.pos;
+		}
+		else
+		{
+			// symbol
+			++s.charpos;
+			s.pos = pos2 + 1;
+			s.token = T_SYMBOL;
+			s._char = c;
+			s.item = c;
+		}
 	}
 	else if(c >= '0' && c <= '9')
 	{
@@ -769,6 +792,8 @@ cstring Tokenizer::FormatToken(TOKEN token, int* what, int* what2)
 	case T_STRING:
 	case T_TEXT:
 		return Format("%s '%s'", name, (cstring)what);
+	case T_CHAR:
+		return Format("%s '%s'", name, EscapeChar(*(char*)what));
 	case T_SYMBOL:
 		return Format("%s '%c'", name, *(char*)what);
 	case T_INT:
@@ -1088,6 +1113,8 @@ cstring Tokenizer::GetTokenName(TOKEN _tt)
 		return "item";
 	case T_STRING:
 		return "string";
+	case T_CHAR:
+		return "char";
 	case T_SYMBOL:
 		return "symbol";
 	case T_INT:
@@ -1128,6 +1155,8 @@ cstring Tokenizer::GetTokenValue(const SeekData& s) const
 	case T_COMPOUND_SYMBOL:
 	case T_BROKEN_NUMBER:
 		return Format("%s '%s'", name, s.item.c_str());
+	case T_CHAR:
+		return Format("%s '%c'", name, EscapeChar(s._char));
 	case T_SYMBOL:
 		return Format("%s '%c'", name, s._char);
 	case T_INT:
@@ -1189,6 +1218,7 @@ int Tokenizer::IsKeywordGroup(std::initializer_list<int> const & groups) const
 	return MISSING_GROUP;
 }
 
+//=================================================================================================
 Pos Tokenizer::GetPos()
 {
 	Pos p;
@@ -1198,6 +1228,7 @@ Pos Tokenizer::GetPos()
 	return p;
 }
 
+//=================================================================================================
 void Tokenizer::MoveTo(const Pos& p)
 {
 	normal_seek.line = p.line - 1;
@@ -1206,6 +1237,7 @@ void Tokenizer::MoveTo(const Pos& p)
 	DoNext(normal_seek, false);
 }
 
+//=================================================================================================
 bool Tokenizer::MoveToClosingSymbol(char start, char end)
 {
 	int depth = 1;
