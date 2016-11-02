@@ -30,6 +30,7 @@ cstring Format(cstring str, ...)
 	return cbuf;
 }
 
+//=================================================================================================
 cstring FormatList(cstring str, va_list list)
 {
 	assert(str);
@@ -42,6 +43,7 @@ cstring FormatList(cstring str, va_list list)
 	return cbuf;
 }
 
+//=================================================================================================
 cstring Upper(cstring str)
 {
 	assert(str);
@@ -59,6 +61,7 @@ cstring Upper(cstring str)
 	return cbuf;
 }
 
+//=================================================================================================
 int TextHelper::ToNumber(cstring s, __int64& i, float& f)
 {
 	assert(s);
@@ -127,6 +130,7 @@ int TextHelper::ToNumber(cstring s, __int64& i, float& f)
 	return 2;
 }
 
+//=================================================================================================
 bool TextHelper::ToInt(cstring s, int& result)
 {
 	__int64 i;
@@ -140,6 +144,7 @@ bool TextHelper::ToInt(cstring s, int& result)
 		return false;
 }
 
+//=================================================================================================
 bool TextHelper::ToUint(cstring s, uint& result)
 {
 	__int64 i;
@@ -153,6 +158,7 @@ bool TextHelper::ToUint(cstring s, uint& result)
 		return false;
 }
 
+//=================================================================================================
 bool TextHelper::ToFloat(cstring s, float& result)
 {
 	__int64 i;
@@ -166,6 +172,7 @@ bool TextHelper::ToFloat(cstring s, float& result)
 		return false;
 }
 
+//=================================================================================================
 bool TextHelper::ToBool(cstring s, bool& result)
 {
 	if(_stricmp(s, "true") == 0)
@@ -187,7 +194,6 @@ bool TextHelper::ToBool(cstring s, bool& result)
 		return true;
 	}
 }
-
 
 //=================================================================================================
 void SplitText(char* buf, vector<cstring>& lines)
@@ -259,7 +265,7 @@ bool Unescape(const string& str_in, uint pos, uint size, string& str_out)
 //=================================================================================================
 cstring Escape(cstring str, char quote)
 {
-	g_escp.clear();
+	char* out = format_buf[format_marker];
 	cstring from = "\n\t\r";
 	cstring to = "ntr";
 
@@ -270,18 +276,49 @@ cstring Escape(cstring str, char quote)
 		if(index == -1)
 		{
 			if(c == quote)
-				g_escp += '\\';
-			g_escp += c;
+				*out++ = '\\';
+			*out++ = c;
 		}
 		else
 		{
-			g_escp += '\\';
-			g_escp += to[index];
+			*out++ = '\\';
+			*out++ = to[index];
 		}
 		++str;
 	}
 
-	return g_escp.c_str();
+	*out = 0;
+	out[FORMAT_LENGTH - 1] = 0;
+	format_marker = (format_marker + 1) % FORMAT_STRINGS;
+	return out;
+}
+
+//=================================================================================================
+cstring Escape(cstring str, string& out, char quote)
+{
+	out.clear();
+	cstring from = "\n\t\r";
+	cstring to = "ntr";
+
+	char c;
+	while((c = *str) != 0)
+	{
+		int index = strchr_index(from, c);
+		if(index == -1)
+		{
+			if(c == quote)
+				out += '\\';
+			out += c;
+		}
+		else
+		{
+			out += '\\';
+			out += to[index];
+		}
+		++str;
+	}
+
+	return out.c_str();
 }
 
 //=================================================================================================
@@ -289,6 +326,13 @@ cstring EscapeChar(char c)
 {
 	g_tmp_string = c;
 	return Escape(g_tmp_string.c_str(), '\'');
+}
+
+//=================================================================================================
+cstring EscapeChar(char c, string& out)
+{
+	g_tmp_string = c;
+	return Escape(g_tmp_string.c_str(), out, '\'');
 }
 
 //=================================================================================================

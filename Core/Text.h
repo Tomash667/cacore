@@ -14,7 +14,9 @@ inline bool Unescape(const string& str_in, string& str_out)
 }
 bool StringInString(cstring s1, cstring s2);
 cstring Escape(cstring str, char quote = 0);
+cstring Escape(cstring str, string& out, char quote = 0);
 cstring EscapeChar(char c);
+cstring EscapeChar(char c, string& out);
 string* ToString(const wchar_t* str);
 
 // return index of character in cstring
