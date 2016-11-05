@@ -4,36 +4,29 @@
 extern string g_tmp_string;
 
 //-----------------------------------------------------------------------------
-struct AnyString
+template<bool AllowNull, uint MinLength>
+struct _InString
 {
-	inline AnyString(cstring s) : s(s)
+	inline _InString(cstring s) : s(s)
 	{
-		assert(s);
-		assert(strlen(s) > 0);
+		if(!AllowNull)
+			assert(s);
+		if(MinLength > 0u)
+			assert(s && strlen(s) >= MinLength);
 	}
-	inline AnyString(const string& str) : s(str.c_str())
+
+	inline _InString(const string& str) : s(str.c_str())
 	{
-		assert(!str.empty());
+		if(MinLength > 0u)
+			assert(str.length() >= MinLength);
 	}
 
 	cstring s;
 };
 
-//-----------------------------------------------------------------------------
-struct AnyStringNull
-{
-	inline AnyStringNull(cstring s) : s(s)
-	{
-		if(s)
-			assert(strlen(s) > 0);
-	}
-	inline AnyStringNull(const string& str) : s(str.c_str())
-	{
-		assert(!str.empty());
-	}
-
-	cstring s;
-};
+typedef _InString<false, 0> InString;
+typedef _InString<false, 1> InString1;
+typedef _InString<true, 0> InStringN;
 
 cstring Format(cstring fmt, ...);
 cstring FormatList(cstring fmt, va_list lis);
@@ -45,8 +38,8 @@ inline bool Unescape(const string& str_in, string& str_out)
 	return Unescape(str_in, 0u, str_in.length(), str_out);
 }
 bool StringInString(cstring s1, cstring s2);
-cstring Escape(const AnyString& str, char quote = '"');
-cstring Escape(const AnyString& str, string& out, char quote = '"');
+cstring Escape(const InString& str, char quote = '"');
+cstring Escape(const InString& str, string& out, char quote = '"');
 cstring EscapeChar(char c);
 cstring EscapeChar(char c, string& out);
 string* ToString(const wchar_t* str);

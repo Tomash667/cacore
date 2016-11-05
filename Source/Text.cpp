@@ -263,7 +263,7 @@ bool Unescape(const string& str_in, uint pos, uint size, string& str_out)
 }
 
 //=================================================================================================
-cstring Escape(const AnyString& s, char quote)
+cstring Escape(const InString& s, char quote)
 {
 	cstring str = s.s;
 	char* out = format_buf[format_marker];
@@ -296,14 +296,15 @@ cstring Escape(const AnyString& s, char quote)
 }
 
 //=================================================================================================
-cstring Escape(cstring str, string& out, char quote)
+cstring Escape(const InString& str, string& out, char quote)
 {
+	cstring s = str.s;
 	out.clear();
 	cstring from = "\n\t\r";
 	cstring to = "ntr";
 
 	char c;
-	while((c = *str) != 0)
+	while((c = *s) != 0)
 	{
 		int index = strchr_index(from, c);
 		if(index == -1)
@@ -317,7 +318,7 @@ cstring Escape(cstring str, string& out, char quote)
 			out += '\\';
 			out += to[index];
 		}
-		++str;
+		++s;
 	}
 
 	return out.c_str();
