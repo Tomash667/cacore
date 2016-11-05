@@ -263,9 +263,11 @@ bool Unescape(const string& str_in, uint pos, uint size, string& str_out)
 }
 
 //=================================================================================================
-cstring Escape(cstring str, char quote)
+cstring Escape(const AnyString& s, char quote)
 {
+	cstring str = s.s;
 	char* out = format_buf[format_marker];
+	char* out_buf = out;
 	cstring from = "\n\t\r";
 	cstring to = "ntr";
 
@@ -290,7 +292,7 @@ cstring Escape(cstring str, char quote)
 	*out = 0;
 	out[FORMAT_LENGTH - 1] = 0;
 	format_marker = (format_marker + 1) % FORMAT_STRINGS;
-	return out;
+	return out_buf;
 }
 
 //=================================================================================================

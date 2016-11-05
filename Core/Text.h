@@ -3,6 +3,38 @@
 // gdy trzeba coœ na chwilê wczytaæ to mo¿na u¿ywaæ tego stringa
 extern string g_tmp_string;
 
+//-----------------------------------------------------------------------------
+struct AnyString
+{
+	inline AnyString(cstring s) : s(s)
+	{
+		assert(s);
+		assert(strlen(s) > 0);
+	}
+	inline AnyString(const string& str) : s(str.c_str())
+	{
+		assert(!str.empty());
+	}
+
+	cstring s;
+};
+
+//-----------------------------------------------------------------------------
+struct AnyStringNull
+{
+	inline AnyStringNull(cstring s) : s(s)
+	{
+		if(s)
+			assert(strlen(s) > 0);
+	}
+	inline AnyStringNull(const string& str) : s(str.c_str())
+	{
+		assert(!str.empty());
+	}
+
+	cstring s;
+};
+
 cstring Format(cstring fmt, ...);
 cstring FormatList(cstring fmt, va_list lis);
 cstring Upper(cstring str);
@@ -13,8 +45,8 @@ inline bool Unescape(const string& str_in, string& str_out)
 	return Unescape(str_in, 0u, str_in.length(), str_out);
 }
 bool StringInString(cstring s1, cstring s2);
-cstring Escape(cstring str, char quote = 0);
-cstring Escape(cstring str, string& out, char quote = 0);
+cstring Escape(const AnyString& str, char quote = '"');
+cstring Escape(const AnyString& str, string& out, char quote = '"');
 cstring EscapeChar(char c);
 cstring EscapeChar(char c, string& out);
 string* ToString(const wchar_t* str);
@@ -93,38 +125,6 @@ inline void Join(const vector<T>& v, string& s, cstring separator, Pred pred)
 		s += pred(*(v.end() - 1));
 	}
 }
-
-//-----------------------------------------------------------------------------
-struct AnyString
-{
-	inline AnyString(cstring s) : s(s)
-	{
-		assert(s);
-		assert(strlen(s) > 0);
-	}
-	inline AnyString(const string& str) : s(str.c_str())
-	{
-		assert(!str.empty());
-	}
-
-	cstring s;
-};
-
-//-----------------------------------------------------------------------------
-struct AnyStringNull
-{
-	inline AnyStringNull(cstring s) : s(s)
-	{
-		if(s)
-			assert(strlen(s) > 0);
-	}
-	inline AnyStringNull(const string& str) : s(str.c_str())
-	{
-		assert(!str.empty());
-	}
-
-	cstring s;
-};
 
 inline char strchrs(cstring s, cstring chrs)
 {
