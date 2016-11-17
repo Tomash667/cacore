@@ -11,6 +11,8 @@ static char format_buf[FORMAT_STRINGS][FORMAT_LENGTH];
 static int format_marker;
 static string g_escp;
 string g_tmp_string;
+static char escape_from[] = { '\n', '\t', '\r', ' ' };
+static cstring escape_to[] = { "\\n", "\\t", "\\r", " " };
 
 //=================================================================================================
 // Formatowanie ci¹gu znaków
@@ -327,15 +329,35 @@ cstring Escape(const InString& str, string& out, char quote)
 //=================================================================================================
 cstring EscapeChar(char c)
 {
-	g_tmp_string = c;
-	return Escape(g_tmp_string.c_str(), '\'');
+	char* out = format_buf[format_marker];
+	for(int i = 0; i < countof(escape_from); ++i)
+	{
+		if(c == escape_from[i])
+		{
+			strcpy(out, escape_to[i]);
+			format_marker = (format_marker + 1) % FORMAT_STRINGS;
+			return out;
+		}
+	}
+
+	if(isprint(c))
+	{
+		out[0] = c;
+		out[1] = 0;
+	}
+	else
+		_snprintf_s(out, FORMAT_LENGTH, FORMAT_LENGTH - 1, "0x%u", (uint)c);
+
+	format_marker = (format_marker + 1) % FORMAT_STRINGS;
+	return out;
 }
 
 //=================================================================================================
 cstring EscapeChar(char c, string& out)
 {
-	g_tmp_string = c;
-	return Escape(g_tmp_string.c_str(), out, '\'');
+	cstring esc = EscapeChar(c);
+	out = esc;
+	return out.c_str();
 }
 
 //=================================================================================================
