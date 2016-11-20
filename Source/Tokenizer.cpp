@@ -809,16 +809,36 @@ cstring Tokenizer::FormatToken(TOKEN token, int* what, int* what2)
 			if(keyword)
 			{
 				if(group)
-					return Format("%s '%s'(%d) from group '%s'(%d)", name, keyword->name, keyword->id, group->name, group->id);
+				{
+					if(IS_SET(flags, F_HIDE_ID))
+						return Format("%s '%s' from group '%s'", name, keyword->name, group->name);
+					else
+						return Format("%s '%s'(%d) from group '%s'(%d)", name, keyword->name, keyword->id, group->name, group->id);
+				}
 				else if(what2)
-					return Format("%s '%s'(%d) from group %d", name, keyword->name, keyword->id, *what2);
+				{
+					if(IS_SET(flags, F_HIDE_ID))
+						return Format("%s '%s' from group %d", name, keyword->name, *what2);
+					else
+						return Format("%s '%s'(%d) from group %d", name, keyword->name, keyword->id, *what2);
+				}
 				else
-					return Format("%s '%s'(%d)", name, keyword->name, keyword->id);
+				{
+					if(IS_SET(flags, F_HIDE_ID))
+						return Format("%s '%s'", name, keyword->name);
+					else
+						return Format("%s '%s'(%d)", name, keyword->name, keyword->id);
+				}
 			}
 			else
 			{
 				if(group)
-					return Format("missing %s %d from group '%s'(%d)", name, *what, group->name, group->id);
+				{
+					if(IS_SET(flags, F_HIDE_ID))
+						return Format("missing %s %d from group '%s'", name, *what, group->name);
+					else
+						return Format("missing %s %d from group '%s'(%d)", name, *what, group->name, group->id);
+				}
 				else if(what2)
 					return Format("missing %s %d from group %d", name, *what, *what2);
 				else
@@ -830,7 +850,12 @@ cstring Tokenizer::FormatToken(TOKEN token, int* what, int* what2)
 		{
 			const KeywordGroup* group = FindKeywordGroup(*what);
 			if(group)
-				return Format("%s '%s'(%d)", name, group->name, group->id);
+			{
+				if(IS_SET(flags, F_HIDE_ID))
+					return Format("%s '%s'", name, group->name);
+				else
+					return Format("%s '%s'(%d)", name, group->name, group->id);
+			}
 			else
 				return Format("%s %d", name, *what);
 		}
@@ -1164,34 +1189,49 @@ cstring Tokenizer::GetTokenValue(const SeekData& s) const
 	case T_FLOAT:
 		return Format("%s %g", name, s._float);
 	case T_KEYWORD:
-		if(s.keyword.size() == 1)
 		{
-			Keyword& keyword = *s.keyword[0];
-			const KeywordGroup* group = FindKeywordGroup(keyword.group);
-			if(group)
-				return Format("%s '%s'(%d) from group '%s'(%d)", name, keyword.name, keyword.id, group->name, group->id);
-			else if(keyword.group != EMPTY_GROUP)
-				return Format("%s '%s'(%d) from group %d", name, keyword.name, keyword.id, keyword.group);
-			else
-				return Format("%s '%s'(%d)", name, keyword.name, keyword.id);
-		}
-		else
-		{
-			LocalString str = Format("keyword '%s' in multiple groups {", s.item.c_str());
-			bool first = true;
-			for(Keyword* k : s.keyword)
+			LocalString str = name;
+			str += " '";
+			str += s.item;
+			str += '\'';
+			if(s.keyword.size() == 1u)
 			{
-				if(first)
-					first = false;
-				else
-					str += ", ";
-				const KeywordGroup* group = FindKeywordGroup(k->group);
+				Keyword& keyword = *s.keyword[0];
+				const KeywordGroup* group = FindKeywordGroup(keyword.group);
+				if(!IS_SET(flags, F_HIDE_ID))
+					str += Format("(%d)", keyword.id);
 				if(group)
-					str += Format("[%d,'%s'(%d)]", k->id, group->name, group->id);
-				else
-					str += Format("[%d:%d]", k->id, k->group);
+				{
+					str += Format(" from group '%s'", group->name);
+					if(!IS_SET(flags, F_HIDE_ID))
+						str += Format("(%d)", group->id);
+				}
+				else if(keyword.group != EMPTY_GROUP)
+					str += Format(" from group %d", keyword.group);
 			}
-			str += "}";
+			else
+			{
+				str += " in multiple groups {";
+				bool first = true;
+				for(Keyword* k : s.keyword)
+				{
+					if(first)
+						first = false;
+					else
+						str += ", ";
+					const KeywordGroup* group = FindKeywordGroup(k->group);
+					if(group)
+					{
+						if(IS_SET(flags, F_HIDE_ID))
+							str += Format("'%s'", group->name);
+						else
+							str += Format("[%d,'%s'(%d)]", k->id, group->name, group->id);
+					}
+					else
+						str += Format("[%d:%d]", k->id, k->group);
+				}
+				str += "}";
+			}
 			return str.c_str();
 		}
 	case T_NONE:

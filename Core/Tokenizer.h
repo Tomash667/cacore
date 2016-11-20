@@ -222,6 +222,7 @@ namespace tokenizer
 			F_SEEK = 1 << 4, // allows to use seek operations
 			F_FILE_INFO = 1 << 5, // add filename in errors
 			F_CHAR = 1 << 6, // handle 'c' as char type (otherwise it's symbol ', identifier c, symbol ')
+			F_HIDE_ID = 1 << 7, // in exceptions don't write keyword/group id, only name
 		};
 
 		explicit Tokenizer(int _flags = F_UNESCAPE) : need_sorting(false), formatter(this), seek(nullptr)

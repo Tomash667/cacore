@@ -95,19 +95,70 @@ typedef delegate<void()> VoidDelegate;
 typedef delegate<void()> VoidF;
 typedef delegate<void(cstring)> PrintMsgFunc;
 
+template<typename T>
+struct IAllocator
+{
+	virtual T* Create() = 0;
+	virtual void Destroy(T* item) = 0;
+};
+
+namespace cacore::internal
+{
+	template<typename T>
+	struct StandardAllocator : IAllocator<T>
+	{
+		inline T* Create()
+		{
+			return new T;
+		}
+
+		inline void Destroy(T* item)
+		{
+			delete item;
+		}
+	};
+}
+
 //-----------------------------------------------------------------------------
 // RAII for simple pointer
-template<typename T>
+template<typename T, typename Allocator = cacore::internal::StandardAllocator<T>>
 class Ptr
 {
+	static_assert(std::is_base_of<IAllocator<T>, Allocator>::value, "Allocator must inherit from IAllocator");
 public:
-	Ptr() : ptr(nullptr) {}
-	~Ptr() { delete ptr; }
-	inline T* operator -> () { return ptr; }
+	inline Ptr(nullptr_t) : ptr(nullptr) 
+	{
+	}
+	inline Ptr(T* ptr) : ptr(ptr)
+	{
+	}
+	inline Ptr()
+	{
+		ptr = allocator.Create();
+	}
+	inline ~Ptr()
+	{
+		if(ptr)
+			allocator.Destroy(ptr);
+	}
+	inline void operator = (T* new_ptr)
+	{
+		if(ptr)
+			allocator.Destroy(ptr);
+		ptr = new_ptr;
+	}
+	inline operator T* ()
+	{
+		return ptr;
+	}
+	inline T* operator -> ()
+	{
+		return ptr;
+	}
 	inline void Ensure()
 	{
 		if(!ptr)
-			ptr = new T;
+			ptr = allocator.Create();
 	}
 	inline T* Pin()
 	{
@@ -115,9 +166,14 @@ public:
 		ptr = nullptr;
 		return t;
 	}
+	inline T*& Get()
+	{
+		return ptr;
+	}
 
 private:
 	T* ptr;
+	Allocator allocator;
 };
 
 //-----------------------------------------------------------------------------

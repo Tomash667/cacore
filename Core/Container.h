@@ -401,6 +401,28 @@ private:
 	inline static ObjectPool<T>& GetPool() { static ObjectPool<T> pool; return pool; }
 };
 
+namespace cacore::internal
+{
+	template<typename T>
+	struct ObjectPoolAllocator : IAllocator<T>
+	{
+		static_assert(std::is_base_of<ObjectPoolProxy<T>, T>::value, "T must inherit from ObjectPoolProxy<T>");
+
+		inline T* Create()
+		{
+			return T::Get();
+		}
+
+		inline void Destroy(T* item)
+		{
+			T::Free(item);
+		}
+	};
+}
+
+template<typename T>
+using ObjectPoolRef = Ptr<T, cacore::internal::ObjectPoolAllocator<T>>;
+
 // tymczasowe stringi
 extern ObjectPool<string> StringPool;
 extern ObjectPool<vector<void*> > VectorPool;
