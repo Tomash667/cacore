@@ -788,6 +788,14 @@ namespace tokenizer
 		Pos GetPos();
 		void MoveTo(const Pos& pos);
 		bool MoveToClosingSymbol(char start, char end);
+		void ForceMoveToClosingSymbol(char start, char end);
+		inline void Reset()
+		{
+			normal_seek.token = T_NONE;
+			normal_seek.pos = 0;
+			normal_seek.line = 0;
+			normal_seek.charpos = 0;
+		}
 
 	private:
 		bool DoNext(SeekData& s, bool return_eol);
@@ -799,13 +807,6 @@ namespace tokenizer
 		uint FindEndOfQuote(SeekData& s, uint _start);
 		void CheckSorting();
 		bool CheckMultiKeywords();
-		inline void Reset()
-		{
-			normal_seek.token = T_NONE;
-			normal_seek.pos = 0;
-			normal_seek.line = 0;
-			normal_seek.charpos = 0;
-		}
 
 		const string* str;
 		int flags;

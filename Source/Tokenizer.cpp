@@ -1297,3 +1297,12 @@ bool Tokenizer::MoveToClosingSymbol(char start, char end)
 
 	return false;
 }
+
+//=================================================================================================
+void Tokenizer::ForceMoveToClosingSymbol(char start, char end)
+{
+	uint pos = GetLine(),
+		charpos = GetCharPos();
+	if(!MoveToClosingSymbol(start, end))
+		Throw("Missing closing '%c' started at '%c' (%u:%u).", end, start, pos, charpos);
+}
