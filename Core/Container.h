@@ -911,12 +911,12 @@ inline int GetIndex(const vector<T>& items, Pred pred)
 }
 
 //-----------------------------------------------------------------------------
-template<typename T>
-inline bool In(T val, const std::initializer_list<T>& lis)
+template<typename T, typename U>
+inline bool In(T val, const std::initializer_list<U>& lis)
 {
-	for(T t : lis)
+	for(U t : lis)
 	{
-		if(t == val)
+		if(t == (T)val)
 			return true;
 	}
 	return false;
