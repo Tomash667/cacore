@@ -487,32 +487,6 @@ bool Tokenizer::NextLine()
 }
 
 //=================================================================================================
-bool Tokenizer::SkipTo(SkipToFunc f)
-{
-	while(true)
-	{
-		if(!Next())
-			return false;
-
-		if(f(*this))
-			return true;
-	}
-}
-
-//=================================================================================================
-bool Tokenizer::SkipToKeywordGroup(int group)
-{
-	while(true)
-	{
-		if(!Next())
-			return false;
-
-		if(IsKeywordGroup(group))
-			return true;
-	}
-}
-
-//=================================================================================================
 bool Tokenizer::PeekSymbol(char symbol)
 {
 	assert(normal_seek.token == T_SYMBOL || normal_seek.token == T_COMPOUND_SYMBOL);

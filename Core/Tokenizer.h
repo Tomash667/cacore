@@ -144,6 +144,7 @@ namespace tokenizer
 			inline __declspec(noreturn) void Throw()
 			{
 				End();
+				OnThrow();
 				throw e;
 			}
 
@@ -151,6 +152,12 @@ namespace tokenizer
 			{
 				End();
 				return Format("(%d:%d) %s", e.line, e.charpos, s.c_str());
+			}
+
+			inline const string& GetNoLineNumber()
+			{
+				End();
+				return s;
 			}
 
 		private:
@@ -193,6 +200,7 @@ namespace tokenizer
 				assert(msg);
 				s = msg;
 				Prepare();
+				OnThrow();
 				throw e;
 			}
 
@@ -203,8 +211,11 @@ namespace tokenizer
 				e.line = line;
 				e.charpos = charpos;
 				SetFilename();
+				OnThrow();
 				throw e;
 			}
+
+			inline void OnThrow() {}
 
 			Exception e;
 			Tokenizer* t;
@@ -244,8 +255,25 @@ namespace tokenizer
 
 		inline bool Next(bool return_eol = false) { return DoNext(normal_seek, return_eol); }
 		bool NextLine();
-		bool SkipTo(SkipToFunc f);
-		bool SkipToKeywordGroup(int group);
+		inline bool SkipTo(delegate<bool(Tokenizer&)> f)
+		{
+			while(true)
+			{
+				if(!Next())
+					return false;
+
+				if(f(*this))
+					return true;
+			}
+		}
+		inline bool SkipToSymbol(char symbol)
+		{
+			return SkipTo([symbol](Tokenizer& t) { return t.IsSymbol(symbol); });
+		}
+		inline bool SkipToKeywordGroup(int group)
+		{
+			return SkipTo([group](Tokenizer& t) { return t.IsKeywordGroup(group); });
+		}
 		bool PeekSymbol(char symbol);
 		inline char PeekChar()
 		{
@@ -295,6 +323,12 @@ namespace tokenizer
 		void DisableKeywordGroup(int group);
 
 		inline Formatter& StartUnexpected() const { formatter.Start(); return formatter; }
+		inline Formatter& SeekStartUnexpected() const
+		{
+			formatter.sd = seek;
+			formatter.Start();
+			return formatter;
+		}
 		inline __declspec(noreturn) void Unexpected(const SeekData& seek_data) const
 		{
 			formatter.sd = &seek_data;
@@ -341,6 +375,14 @@ namespace tokenizer
 		{
 			cstring err = FormatList(msg, (va_list)&arg);
 			formatter.ThrowAt(line, charpos, err);
+		}
+		inline cstring Expecting(cstring what)
+		{
+			return Format("Expecting %s, found %s.", what, GetTokenValue(normal_seek));
+		}
+		inline cstring ThrowExpecting(cstring what)
+		{
+			formatter.Throw(Expecting(what));
 		}
 
 		//===========================================================================================================================
