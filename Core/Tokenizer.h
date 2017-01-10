@@ -270,6 +270,10 @@ namespace tokenizer
 		{
 			return SkipTo([symbol](Tokenizer& t) { return t.IsSymbol(symbol); });
 		}
+		inline bool SkipToSymbol(cstring symbols)
+		{
+			return SkipTo([symbols](Tokenizer& t) { return t.IsSymbol(symbols); });
+		}
 		inline bool SkipToKeywordGroup(int group)
 		{
 			return SkipTo([group](Tokenizer& t) { return t.IsKeywordGroup(group); });

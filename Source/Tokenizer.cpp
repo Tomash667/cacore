@@ -1246,6 +1246,7 @@ Pos Tokenizer::GetPos()
 void Tokenizer::MoveTo(const Pos& p)
 {
 	normal_seek.pos = p.pos;
+	normal_seek.token = T_NONE;
 	DoNext(normal_seek, false);
 	normal_seek.line = p.line - 1;
 	normal_seek.charpos = p.charpos - 1;
