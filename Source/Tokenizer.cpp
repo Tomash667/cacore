@@ -105,7 +105,9 @@ redo:
 	}
 	else if(c == '/')
 	{
-		char c2 = str->at(pos2 + 1);
+		char c2 = 0;
+		if(pos2 + 1 != str->size())
+			c2 = str->at(pos2 + 1);
 		if(c2 == '/')
 		{
 			s.pos = FindFirstOf(s, "\n", pos2 + 1);
@@ -253,7 +255,7 @@ redo:
 	else if(c >= '0' && c <= '9')
 	{
 		// number
-		if(c == '0' && str->at(pos2 + 1) == 'x')
+		if(c == '0' && pos2 + 1 != str->size() && str->at(pos2 + 1) == 'x')
 		{
 			// hex number
 			s.pos = FindFirstOf(s, WHITESPACE_SYMBOLS_DOT, pos2);
@@ -329,9 +331,17 @@ void Tokenizer::ParseNumber(SeekData& s, uint pos2, bool negative)
 	3 - number.number.
 	*/
 
-	for(uint i = pos2, len = str->length(); i < len; ++i, ++s.charpos)
+	uint len = str->length();
+	do
 	{
-		char c = str->at(i);
+		if(pos2 >= len)
+		{
+			// eof
+			s.pos = pos2;
+			break;
+		}
+
+		char c = str->at(pos2);
 		if(c >= '0' && c <= '9')
 		{
 			s.item += c;
@@ -348,14 +358,14 @@ void Tokenizer::ParseNumber(SeekData& s, uint pos2, bool negative)
 			else
 			{
 				// second dot, end parsing
-				s.pos = i;
+				s.pos = pos2;
 				break;
 			}
 		}
 		else if(strchr2(c, WHITESPACE_SYMBOLS) != 0)
 		{
 			// found symbol or whitespace, break
-			s.pos = i;
+			s.pos = pos2;
 			break;
 		}
 		else
@@ -365,23 +375,26 @@ void Tokenizer::ParseNumber(SeekData& s, uint pos2, bool negative)
 				// int item -> broken number
 				// int . int item -> broken number
 				// find end of item
-				s.pos = FindFirstOf(s, WHITESPACE_SYMBOLS_DOT, i);
+				s.pos = FindFirstOf(s, WHITESPACE_SYMBOLS_DOT, pos2);
 				if(s.pos == string::npos)
-					s.item += str->substr(i);
+					s.item += str->substr(pos2);
 				else
-					s.item += str->substr(i, s.pos - i);
+					s.item += str->substr(pos2, s.pos - pos2);
 				s.token = T_BROKEN_NUMBER;
 				return;
 			}
 			else if(have_dot == 1 || have_dot == 3)
 			{
 				// int dot item
-				s.pos = i - 1;
+				s.pos = pos2 - 1;
 				s.item.pop_back();
 				break;
 			}
 		}
-	}
+
+		++pos2;
+		++s.charpos;
+	} while(1);
 
 	// parse number
 	__int64 val;
@@ -490,6 +503,8 @@ bool Tokenizer::NextLine()
 bool Tokenizer::PeekSymbol(char symbol)
 {
 	assert(normal_seek.token == T_SYMBOL || normal_seek.token == T_COMPOUND_SYMBOL);
+	if(str->size() == normal_seek.pos)
+		return false;
 	char c = str->at(normal_seek.pos);
 	if(c == symbol)
 	{
@@ -611,7 +626,8 @@ uint Tokenizer::FindFirstOfStr(SeekData& s, cstring _str, uint _start)
 //=================================================================================================
 uint Tokenizer::FindEndOfQuote(SeekData& s, uint _start)
 {
-	assert(_start < str->length());
+	if(_start >= str->length())
+		return false;
 
 	for(uint i = _start, end = str->length(); i<end; ++i)
 	{
