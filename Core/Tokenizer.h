@@ -384,7 +384,7 @@ namespace tokenizer
 		{
 			return Format("Expecting %s, found %s.", what, GetTokenValue(normal_seek));
 		}
-		inline cstring ThrowExpecting(cstring what)
+		inline __declspec(noreturn) void ThrowExpecting(cstring what)
 		{
 			formatter.Throw(Expecting(what));
 		}

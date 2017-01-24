@@ -102,6 +102,12 @@ struct IAllocator
 	virtual void Destroy(T* item) = 0;
 };
 
+template<typename T>
+struct IVectorAllocator
+{
+	virtual void Destroy(vector<T*>& items) = 0;
+};
+
 namespace cacore::internal
 {
 	template<typename T>
@@ -124,7 +130,7 @@ namespace cacore::internal
 template<typename T, typename Allocator = cacore::internal::StandardAllocator<T>>
 class Ptr
 {
-	static_assert(std::is_base_of<IAllocator<T>, Allocator>::value, "Allocator must inherit from IAllocator");
+	static_assert(std::is_base_of<IAllocator<T>, Allocator>::value, "Allocator must inherit from IAllocator.");
 public:
 	inline Ptr(nullptr_t) : ptr(nullptr) 
 	{
@@ -174,6 +180,42 @@ public:
 private:
 	T* ptr;
 	Allocator allocator;
+};
+
+//-----------------------------------------------------------------------------
+// RAII for vector of pointers
+template<typename T, typename Allocator>
+class VectorPtr
+{
+public:
+	static_assert(std::is_base_of<IVectorAllocator<T>, Allocator>::value, "Allocator must inherit from IVectorAllocator.");
+
+	inline VectorPtr() : pinned(false)
+	{
+
+	}
+
+	inline ~VectorPtr()
+	{
+		if(!pinned)
+			allocator.Destroy(items);
+	}
+
+	inline vector<T*>* operator -> ()
+	{
+		return &items;
+	}
+
+	inline vector<T*>&& Pin()
+	{
+		pinned = true;
+		return std::move(items);
+	}
+
+private:
+	vector<T*> items;
+	Allocator allocator;
+	bool pinned;
 };
 
 //-----------------------------------------------------------------------------

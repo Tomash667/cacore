@@ -627,7 +627,7 @@ uint Tokenizer::FindFirstOfStr(SeekData& s, cstring _str, uint _start)
 uint Tokenizer::FindEndOfQuote(SeekData& s, uint _start)
 {
 	if(_start >= str->length())
-		return false;
+		return string::npos;
 
 	for(uint i = _start, end = str->length(); i<end; ++i)
 	{

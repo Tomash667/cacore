@@ -418,10 +418,24 @@ namespace cacore::internal
 			T::Free(item);
 		}
 	};
+
+	template<typename T>
+	struct ObjectPoolVectorAllocator : IVectorAllocator<T>
+	{
+		static_assert(std::is_base_of<ObjectPoolProxy<T>, T>::value, "T must inherit from ObjectPoolProxy<T>");
+
+		inline void Destroy(vector<T*>& items)
+		{
+			T::Free(items);
+		}
+	};
 }
 
 template<typename T>
 using ObjectPoolRef = Ptr<T, cacore::internal::ObjectPoolAllocator<T>>;
+
+template<typename T>
+using ObjectPoolVectorRef = VectorPtr<T, cacore::internal::ObjectPoolVectorAllocator<T>>;
 
 // tymczasowe stringi
 extern ObjectPool<string> StringPool;
