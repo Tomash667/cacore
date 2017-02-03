@@ -1269,8 +1269,32 @@ void Tokenizer::MoveTo(const Pos& p)
 }
 
 //=================================================================================================
+char Tokenizer::GetClosingSymbol(char start)
+{
+	switch(start)
+	{
+	case '(':
+		return ')';
+	case '{':
+		return '}';
+	case '[':
+		return ']';
+	case '<':
+		return '>';
+	default:
+		return 0;
+	}
+}
+
+//=================================================================================================
 bool Tokenizer::MoveToClosingSymbol(char start, char end)
 {
+	if(end == 0)
+	{
+		end = GetClosingSymbol(start);
+		assert(end);
+	}
+
 	int depth = 1;
 	if(!IsSymbol(start))
 		return false;
@@ -1292,6 +1316,12 @@ bool Tokenizer::MoveToClosingSymbol(char start, char end)
 //=================================================================================================
 void Tokenizer::ForceMoveToClosingSymbol(char start, char end)
 {
+	if(end == 0)
+	{
+		end = GetClosingSymbol(start);
+		assert(end);
+	}
+
 	uint pos = GetLine(),
 		charpos = GetCharPos();
 	if(!MoveToClosingSymbol(start, end))

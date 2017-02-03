@@ -833,8 +833,9 @@ namespace tokenizer
 		}
 		Pos GetPos();
 		void MoveTo(const Pos& pos);
-		bool MoveToClosingSymbol(char start, char end);
-		void ForceMoveToClosingSymbol(char start, char end);
+		char GetClosingSymbol(char start);
+		bool MoveToClosingSymbol(char start, char end = 0);
+		void ForceMoveToClosingSymbol(char start, char end = 0);
 		inline void Reset()
 		{
 			normal_seek.token = T_NONE;
