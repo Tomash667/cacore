@@ -256,3 +256,18 @@ inline To union_cast(const From& f)
 	a.from = f;
 	return a.to;
 }
+
+
+//-----------------------------------------------------------------------------
+// Return true if any element matches condition
+template<typename T, typename Arg>
+inline bool Any(const T& item, const Arg& arg)
+{
+	return item == arg;
+}
+
+template<typename T, typename Arg, typename... Args>
+inline bool Any(const T& item, const Arg& arg, const Args&... args)
+{
+	return item == arg || Any(item, args...);
+}
