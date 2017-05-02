@@ -292,7 +292,7 @@ cstring Escape(const InString& s, char quote)
 	}
 
 	*out = 0;
-	out[FORMAT_LENGTH - 1] = 0;
+	out_buf[FORMAT_LENGTH - 1] = 0;
 	format_marker = (format_marker + 1) % FORMAT_STRINGS;
 	return out_buf;
 }
